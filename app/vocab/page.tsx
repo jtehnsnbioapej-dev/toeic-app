@@ -178,25 +178,25 @@ export default function VocabPage() {
             setPetMessage("この単語、一緒に覚えよう！タップして意味を確認してみて！");
           }
         }}
-          className="bg-white rounded-3xl shadow-md border border-slate-100 p-8 min-h-56 flex flex-col items-center justify-center cursor-pointer active:scale-98 transition-transform select-none"
+          className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 min-h-32 flex flex-col items-center justify-center cursor-pointer active:scale-98 transition-transform select-none"
         >
           {!flipped ? (
             <div className="text-center">
               <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full">{word.part}</span>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <h2 className="text-3xl font-bold text-slate-800">{word.word}</h2>
-                <SpeakButton text={word.word} size={36} />
+              <div className="flex items-center justify-center gap-2 mt-3">
+                <h2 className="text-2xl font-bold text-slate-800">{word.word}</h2>
+                <SpeakButton text={word.word} size={30} />
               </div>
-              <p className="text-slate-400 text-sm mt-4">タップで意味を確認</p>
+              <p className="text-slate-400 text-xs mt-3">タップで意味を確認</p>
             </div>
           ) : (
             <div className="text-center">
               <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full">{word.part}</span>
-              <div className="flex items-center justify-center gap-3 mt-3">
-                <h2 className="text-3xl font-bold text-slate-800">{word.word}</h2>
-                <SpeakButton text={word.word} size={36} />
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <h2 className="text-2xl font-bold text-slate-800">{word.word}</h2>
+                <SpeakButton text={word.word} size={30} />
               </div>
-              <p className="text-xl font-medium text-blue-600 mt-3">{word.meaning}</p>
+              <p className="text-lg font-medium text-blue-600 mt-2">{word.meaning}</p>
             </div>
           )}
         </div>

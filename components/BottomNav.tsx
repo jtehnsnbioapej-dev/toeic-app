@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/",          icon: "🏠", label: "ホーム"   },
-  { href: "/quiz",      icon: "🎯", label: "クイズ"   },
-  { href: "/pet-chat",  icon: "💬", label: "話す"     },
-  { href: "/vocab",     icon: "📝", label: "単語"     },
-  { href: "/progress",  icon: "📊", label: "進捗"     },
+  { href: "/",               icon: "🏠", label: "ホーム"   },
+  { href: "/quiz",           icon: "🎯", label: "クイズ"   },
+  { href: "/part-practice",  icon: "📚", label: "パート"   },
+  { href: "/vocab",          icon: "📝", label: "単語"     },
+  { href: "/progress",       icon: "📊", label: "進捗"     },
 ];
 
 export default function BottomNav() {

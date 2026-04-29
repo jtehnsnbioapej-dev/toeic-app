@@ -78,10 +78,10 @@ function SpeechBubble({ message, side, isLoading, speakText }: BubbleProps) {
         ...(isRight ? { right: 12 } : { left: 12 }),
         maxWidth: "58%",
         background: "#fff",
-        borderRadius: isRight ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+        borderRadius: "16px 16px 16px 16px",
         padding: "10px 14px 8px",
-        border: "2.5px solid #38B2F0",
-        boxShadow: "0 4px 16px rgba(56,178,240,0.28)",
+        border: "1px solid #D1D5DB",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
         zIndex: 5,
       }}
     >
@@ -101,7 +101,7 @@ function SpeechBubble({ message, side, isLoading, speakText }: BubbleProps) {
         width: 0, height: 0,
         borderLeft: "10px solid transparent",
         borderRight: "10px solid transparent",
-        borderTop: "13px solid #38B2F0",
+        borderTop: "13px solid #D1D5DB",
       }} />
       <div style={{
         position: "absolute",
@@ -126,10 +126,10 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
         left: 12,
         maxWidth: "58%",
         background: "#fff",
-        borderRadius: "16px 16px 16px 4px",
+        borderRadius: "16px 16px 16px 16px",
         padding: "8px 10px",
-        border: "2.5px solid #38B2F0",
-        boxShadow: "0 4px 16px rgba(56,178,240,0.28)",
+        border: "1px solid #D1D5DB",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
         zIndex: 5,
         display: "flex",
         flexDirection: "column",
@@ -154,7 +154,7 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
         position: "absolute", bottom: -13, left: 18,
         width: 0, height: 0,
         borderLeft: "10px solid transparent", borderRight: "10px solid transparent",
-        borderTop: "13px solid #38B2F0",
+        borderTop: "13px solid #D1D5DB",
       }} />
       <div style={{
         position: "absolute", bottom: -10, left: 18,

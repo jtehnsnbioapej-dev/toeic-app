@@ -129,8 +129,10 @@ export default function QuizPage() {
       // フォールバック: 組み込み解説を使用
     } finally {
       setLoadingExplanation(false);
-      setUserEmotion(correct ? "happy" : "sad");
       setPetEffect(correct ? "correct" : "wrong");
+      setTimeout(() => {
+        setUserEmotion(correct ? "happy" : "sad");
+      }, 1000);
     }
   };
 
@@ -194,7 +196,7 @@ export default function QuizPage() {
           </Link>
         </div>
 
-        <PetScene message={finishMsg} />
+        <PetScene message={finishMsg} bg="/教室.png" />
 
         <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
           {/* スコアカード */}
@@ -269,7 +271,7 @@ export default function QuizPage() {
       <div style={{ position: "sticky", top: 0, zIndex: 10 }}>
       <div style={{
         background: "linear-gradient(180deg, #C9EEFF 0%, #EBF8FF 100%)",
-        padding: "52px 20px 16px",
+        padding: "16px 20px 12px",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <Link href="/" style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700, textDecoration: "none" }}>← ホーム</Link>
@@ -305,6 +307,59 @@ export default function QuizPage() {
       {/* ペット */}
       <div style={{ position: "relative" }}>
         <PetScene message={petMessage} leftMessage={userChoice ?? undefined} isLoading={loadingExplanation && selected !== null} speaker={speaker} leftEmotion={userEmotion} petEffect={petEffect} bg="/教室.png" />
+        {/* 選択肢オーバーレイ（中央横幅60%・縦中央・キャラ顔は左右に残る） */}
+        <div style={{
+          position: "absolute",
+          top: "62%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "36%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          zIndex: 6,
+          pointerEvents: "none",
+        }}>
+          {q.options.map((opt, idx) => {
+            let bg = "rgba(255,255,255,0.88)";
+            let border = "1px solid rgba(229,231,235,0.7)";
+            let color = "var(--text)";
+            if (selected !== null) {
+              if (idx === q.answer) { bg = "rgba(240,253,244,0.95)"; border = "1px solid #22C55E"; color = "#166534"; }
+              else if (idx === selected) { bg = "rgba(255,241,242,0.95)"; border = "1px solid #F87171"; color = "#9F1239"; }
+              else { color = "#9CA3AF"; bg = "rgba(255,255,255,0.65)"; }
+            }
+            return (
+              <button
+                key={idx}
+                onClick={() => handleSelect(idx)}
+                style={{
+                  background: bg, border, borderRadius: 12,
+                  padding: "8px 10px", cursor: selected !== null ? "default" : "pointer",
+                  display: "flex", alignItems: "center", gap: 7,
+                  textAlign: "left", width: "100%",
+                  backdropFilter: "blur(6px)",
+                  pointerEvents: "auto",
+                }}
+              >
+                <span style={{
+                  width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                  background: selected !== null
+                    ? (idx === q.answer ? "#22C55E" : idx === selected ? "#F87171" : "#F3F4F6")
+                    : "#EFF6FF",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 10, fontWeight: 800,
+                  color: selected !== null
+                    ? (idx === q.answer || idx === selected ? "#fff" : "#9CA3AF")
+                    : "var(--primary)",
+                }}>
+                  {["A", "B", "C", "D"][idx]}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color, lineHeight: 1.3 }}>{opt}</span>
+              </button>
+            );
+          })}
+        </div>
         {selected !== null && (
           <button
             onClick={handleNext}
@@ -314,7 +369,7 @@ export default function QuizPage() {
               color: "#fff", borderRadius: 20, padding: "8px 16px",
               fontWeight: 800, fontSize: 13, border: "none", cursor: "pointer",
               boxShadow: "0 3px 10px rgba(56,178,240,0.45)",
-              zIndex: 6,
+              zIndex: 7,
             }}
           >
             {current + 1 >= quizQuestions.length ? "結果を見る →" : "次の問題 →"}
@@ -343,48 +398,6 @@ export default function QuizPage() {
       </div>{/* sticky end */}
 
       <div style={{ padding: "0 20px" }}>
-        {/* 選択肢 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {q.options.map((opt, idx) => {
-            let bg = "#fff";
-            let border = "2px solid #E5E7EB";
-            let color = "var(--text)";
-            if (selected !== null) {
-              if (idx === q.answer) { bg = "#F0FDF4"; border = "2px solid #22C55E"; color = "#166534"; }
-              else if (idx === selected) { bg = "#FFF1F2"; border = "2px solid #F87171"; color = "#9F1239"; }
-              else { color = "#9CA3AF"; }
-            }
-            return (
-              <button
-                key={idx}
-                onClick={() => handleSelect(idx)}
-                style={{
-                  background: bg, border, borderRadius: 16,
-                  padding: "14px 16px", cursor: selected !== null ? "default" : "pointer",
-                  display: "flex", alignItems: "center", gap: 12,
-                  textAlign: "left", width: "100%",
-                  transition: "all 0.15s",
-                }}
-              >
-                <span style={{
-                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                  background: selected !== null
-                    ? (idx === q.answer ? "#22C55E" : idx === selected ? "#F87171" : "#F3F4F6")
-                    : "#EFF6FF",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 800,
-                  color: selected !== null
-                    ? (idx === q.answer || idx === selected ? "#fff" : "#9CA3AF")
-                    : "var(--primary)",
-                }}>
-                  {["A", "B", "C", "D"][idx]}
-                </span>
-                <span style={{ fontSize: 14, fontWeight: 600, color, lineHeight: 1.5 }}>{opt}</span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* 解説 */}
         {selected !== null && (
           <div style={{

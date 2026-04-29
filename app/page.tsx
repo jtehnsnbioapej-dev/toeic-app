@@ -263,27 +263,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* ペットと話す */}
-        <Link href="/pet-chat" style={{
-          display: "flex", alignItems: "center", gap: 16,
-          background: "linear-gradient(135deg, #38B2F0 0%, #1A90D4 100%)",
-          borderRadius: 20, padding: "18px 20px", textDecoration: "none",
-          boxShadow: "0 6px 20px rgba(56,178,240,0.35)",
-        }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 16,
-            background: "rgba(255,255,255,0.22)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 28, flexShrink: 0,
-          }}>💬</div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>{demoPet.name}と話す</p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 3, fontWeight: 600 }}>
-              英語・日本語で自由に話しかけよう
-            </p>
-          </div>
-          <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 22 }}>›</span>
-        </Link>
 
       </div>
     </div>
