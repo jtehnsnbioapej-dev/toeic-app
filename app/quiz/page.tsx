@@ -60,6 +60,7 @@ export default function QuizPage() {
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "surprise">("think");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
+  const [translation, setTranslation] = useState<string>("");
 
   // グローバル難易度設定をlocalStorageから読み込む
   useEffect(() => {
@@ -104,7 +105,18 @@ export default function QuizPage() {
     setPetMessage(reaction);
 
     setExplanation(q.explanation);
+    setTranslation("");
     setLoadingExplanation(true);
+
+    // 問題文の日本語訳を並行取得
+    fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: q.question.replace(/_+/, q.options[q.answer]) }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.translation) setTranslation(d.translation); })
+      .catch(() => {});
 
     try {
       const res = await fetch("/api/explain", {
@@ -132,7 +144,7 @@ export default function QuizPage() {
       setPetEffect(correct ? "correct" : "wrong");
       setTimeout(() => {
         setUserEmotion(correct ? "happy" : "sad");
-      }, 1000);
+      }, 100);
     }
   };
 
@@ -144,6 +156,7 @@ export default function QuizPage() {
       setCurrent(current + 1);
       setSelected(null);
       setExplanation("");
+      setTranslation("");
       setSpeaker("right");
       setUserChoice(null);
       setUserEmotion("think");
@@ -164,6 +177,7 @@ export default function QuizPage() {
     setFinished(false);
     setUserChoice(null);
     setPetEffect(null);
+    setTranslation("");
     setPetMessage(QUESTION_MESSAGES[0]);
   };
 
@@ -417,6 +431,21 @@ export default function QuizPage() {
             }
           </div>
         )}
+
+        {/* 問題文の日本語訳 */}
+        {selected !== null && (
+          <div style={{
+            marginTop: 10, borderRadius: 16, padding: "12px 16px",
+            background: "#F8FAFC", border: "1px solid #E2E8F0",
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", marginBottom: 4 }}>📖 日本語訳</p>
+            {translation
+              ? <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7 }}>{translation}</p>
+              : <p style={{ fontSize: 13, color: "#94A3B8" }}>翻訳中…</p>
+            }
+          </div>
+        )}
+
 
       </div>
     </div>

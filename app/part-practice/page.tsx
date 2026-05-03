@@ -61,6 +61,7 @@ export default function PartPracticePage() {
   const [userChoice, setUserChoice] = useState<string | null>(null);
   const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "surprise">("idle");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
+  const [translation, setTranslation] = useState<string>("");
 
   useEffect(() => {
     const saved = localStorage.getItem("globalDifficulty");
@@ -103,7 +104,17 @@ export default function PartPracticePage() {
     setSpeaker("right");
     setPetMessage(reaction);
     setExplanation(q.explanation);
+    setTranslation("");
     setLoadingExplanation(true);
+
+    fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: q.question.replace(/_+/, q.options[q.answer]) }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.translation) setTranslation(d.translation); })
+      .catch(() => {});
 
     try {
       const res = await fetch("/api/explain", {
@@ -131,7 +142,7 @@ export default function PartPracticePage() {
       setPetEffect(correct ? "correct" : "wrong");
       setTimeout(() => {
         setUserEmotion(correct ? "happy" : "sad");
-      }, 1000);
+      }, 100);
     }
   };
 
@@ -143,6 +154,7 @@ export default function PartPracticePage() {
       setCurrent(current + 1);
       setSelected(null);
       setExplanation("");
+      setTranslation("");
       setSpeaker("right");
       setUserChoice(null);
       setUserEmotion("think");
@@ -443,6 +455,20 @@ export default function PartPracticePage() {
             {loadingExplanation
               ? <p style={{ fontSize: 13, color: "#6B7280" }}>解説を読み込み中…</p>
               : <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-line" }}>{explanation}</p>
+            }
+          </div>
+        )}
+
+        {/* 問題文の日本語訳 */}
+        {selected !== null && (
+          <div style={{
+            marginTop: 10, borderRadius: 16, padding: "12px 16px",
+            background: "#F8FAFC", border: "1px solid #E2E8F0",
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", marginBottom: 4 }}>📖 日本語訳</p>
+            {translation
+              ? <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7 }}>{translation}</p>
+              : <p style={{ fontSize: 13, color: "#94A3B8" }}>翻訳中…</p>
             }
           </div>
         )}
