@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { questions, Question, DIFFICULTY_LABELS } from "@/data/questions";
+import translationsMap from "@/data/question-translations.json";
 import { saveTodayProgress } from "@/lib/storage";
 import PetScene from "@/components/PetScene";
 import SpeakButton from "@/components/SpeakButton";
@@ -107,14 +108,20 @@ export default function PartPracticePage() {
     setTranslation("");
     setLoadingExplanation(true);
 
-    fetch("/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: q.question.replace(/_+/, q.options[q.answer]) }),
-    })
-      .then((r) => r.json())
-      .then((d) => { if (d.translation) setTranslation(d.translation); })
-      .catch(() => {});
+    // 問題文の日本語訳をJSONから取得（なければAPIにフォールバック）
+    const cachedJa = (translationsMap as Record<string, string>)[String(q.id)];
+    if (cachedJa) {
+      setTranslation(cachedJa);
+    } else {
+      fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: q.question.replace(/_+/, q.options[q.answer]) }),
+      })
+        .then((r) => r.json())
+        .then((d) => { if (d.translation) setTranslation(d.translation); })
+        .catch(() => {});
+    }
 
     try {
       const res = await fetch("/api/explain", {
