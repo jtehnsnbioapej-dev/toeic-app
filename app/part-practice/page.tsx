@@ -474,7 +474,7 @@ export default function PartPracticePage() {
           }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", marginBottom: 4 }}>📖 日本語訳</p>
             {translation
-              ? <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7 }}>{translation}</p>
+              ? <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{translation}</p>
               : <p style={{ fontSize: 13, color: "#94A3B8" }}>翻訳中…</p>
             }
           </div>
