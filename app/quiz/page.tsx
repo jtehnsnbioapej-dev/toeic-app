@@ -52,7 +52,6 @@ export default function QuizPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [results, setResults] = useState<boolean[]>([]);
   const [explanation, setExplanation] = useState<string>("");
-  const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [finished, setFinished] = useState(false);
   const [petMessage, setPetMessage] = useState(
     QUESTION_MESSAGES[Math.floor(Math.random() * QUESTION_MESSAGES.length)]
@@ -87,7 +86,7 @@ export default function QuizPage() {
 
   const q = quizQuestions[current];
 
-  const handleSelect = async (idx: number) => {
+  const handleSelect = (idx: number) => {
     if (selected !== null || !q) return;
     setSelected(idx);
     const correct = idx === q.answer;
@@ -107,7 +106,6 @@ export default function QuizPage() {
 
     setExplanation(q.explanation);
     setTranslation("");
-    setLoadingExplanation(true);
 
     // 問題文の日本語訳をJSONから取得（なければAPIにフォールバック）
     const cachedJa = (translationsMap as Record<string, string>)[String(q.id)];
@@ -124,34 +122,10 @@ export default function QuizPage() {
         .catch(() => {});
     }
 
-    try {
-      const res = await fetch("/api/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: q.question,
-          options: q.options,
-          answer: q.options[q.answer],
-          selected: q.options[idx],
-          part: q.part,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.explanation) {
-          setExplanation(data.explanation);
-          setPetMessage(data.explanation);
-        }
-      }
-    } catch {
-      // フォールバック: 組み込み解説を使用
-    } finally {
-      setLoadingExplanation(false);
-      setPetEffect(correct ? "correct" : "wrong");
-      setTimeout(() => {
-        setUserEmotion(correct ? "happy" : "sad");
-      }, 100);
-    }
+    setPetEffect(correct ? "correct" : "wrong");
+    setTimeout(() => {
+      setUserEmotion(correct ? "happy" : "sad");
+    }, 100);
   };
 
   const handleNext = () => {
@@ -326,7 +300,7 @@ export default function QuizPage() {
 
       {/* ペット */}
       <div style={{ position: "relative" }}>
-        <PetScene message={petMessage} leftMessage={userChoice ?? undefined} isLoading={loadingExplanation && selected !== null} speaker={speaker} leftEmotion={userEmotion} petEffect={petEffect} bg="/教室.png" />
+        <PetScene message={petMessage} leftMessage={userChoice ?? undefined} speaker={speaker} leftEmotion={userEmotion} petEffect={petEffect} bg="/教室.png" />
         {/* 選択肢オーバーレイ（中央横幅60%・縦中央・キャラ顔は左右に残る） */}
         <div style={{
           position: "absolute",
@@ -396,6 +370,7 @@ export default function QuizPage() {
           </button>
         )}
       </div>
+      </div>{/* sticky end */}
 
       {/* 問題文 */}
       <div style={{ padding: "0 20px 14px", background: "var(--bg)" }}>
@@ -415,7 +390,6 @@ export default function QuizPage() {
           </div>
         </div>
       </div>
-      </div>{/* sticky end */}
 
       <div style={{ padding: "0 20px" }}>
         {/* 解説 */}
@@ -431,10 +405,7 @@ export default function QuizPage() {
             }}>
               {selected === q.answer ? "✓ 正解！" : `✗ 不正解　正解は「${["A", "B", "C", "D"][q.answer]}. ${q.options[q.answer]}」`}
             </p>
-            {loadingExplanation
-              ? <p style={{ fontSize: 13, color: "#6B7280" }}>解説を読み込み中…</p>
-              : <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-line" }}>{explanation}</p>
-            }
+            <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-line" }}>{explanation}</p>
           </div>
         )}
 

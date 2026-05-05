@@ -55,7 +55,6 @@ export default function PartPracticePage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [results, setResults] = useState<boolean[]>([]);
   const [explanation, setExplanation] = useState<string>("");
-  const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [finished, setFinished] = useState(false);
   const [petMessage, setPetMessage] = useState("どのパートを練習する？");
   const [speaker, setSpeaker] = useState<"left" | "right">("right");
@@ -90,7 +89,7 @@ export default function PartPracticePage() {
 
   const q = quizQuestions[current];
 
-  const handleSelect = async (idx: number) => {
+  const handleSelect = (idx: number) => {
     if (selected !== null || !q) return;
     setSelected(idx);
     const correct = idx === q.answer;
@@ -106,7 +105,6 @@ export default function PartPracticePage() {
     setPetMessage(reaction);
     setExplanation(q.explanation);
     setTranslation("");
-    setLoadingExplanation(true);
 
     // 問題文の日本語訳をJSONから取得（なければAPIにフォールバック）
     const cachedJa = (translationsMap as Record<string, string>)[String(q.id)];
@@ -123,34 +121,10 @@ export default function PartPracticePage() {
         .catch(() => {});
     }
 
-    try {
-      const res = await fetch("/api/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: q.question,
-          options: q.options,
-          answer: q.options[q.answer],
-          selected: q.options[idx],
-          part: q.part,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.explanation) {
-          setExplanation(data.explanation);
-          setPetMessage(data.explanation);
-        }
-      }
-    } catch {
-      // フォールバック
-    } finally {
-      setLoadingExplanation(false);
-      setPetEffect(correct ? "correct" : "wrong");
-      setTimeout(() => {
-        setUserEmotion(correct ? "happy" : "sad");
-      }, 100);
-    }
+    setPetEffect(correct ? "correct" : "wrong");
+    setTimeout(() => {
+      setUserEmotion(correct ? "happy" : "sad");
+    }, 100);
   };
 
   const handleNext = () => {
@@ -354,7 +328,7 @@ export default function PartPracticePage() {
         </div>
 
         <div style={{ position: "relative" }}>
-          <PetScene message={petMessage} leftMessage={userChoice ?? undefined} isLoading={loadingExplanation && selected !== null} speaker={speaker} leftEmotion={userEmotion} petEffect={petEffect} bg={selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"} />
+          <PetScene message={petMessage} leftMessage={userChoice ?? undefined} speaker={speaker} leftEmotion={userEmotion} petEffect={petEffect} bg={selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"} />
 
           {/* 選択肢オーバーレイ */}
           <div style={{
@@ -426,22 +400,22 @@ export default function PartPracticePage() {
             </button>
           )}
         </div>
+      </div>
 
-        <div style={{ padding: "0 20px 14px", background: "var(--bg)" }}>
-          <div style={{
-            background: "#fff", borderRadius: 20, padding: "20px",
-            boxShadow: "0 2px 12px rgba(56,178,240,0.08)",
-          }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--text)", whiteSpace: "pre-line", flex: 1 }}>
-                {selected !== null
-                  ? q.question.replace(/_+/, q.options[q.answer])
-                  : q.question}
-              </p>
-              {selected !== null && (
-                <SpeakButton text={q.question.replace(/_+/, q.options[q.answer])} size={34} />
-              )}
-            </div>
+      <div style={{ padding: "0 20px 14px", background: "var(--bg)" }}>
+        <div style={{
+          background: "#fff", borderRadius: 20, padding: "20px",
+          boxShadow: "0 2px 12px rgba(56,178,240,0.08)",
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: "var(--text)", whiteSpace: "pre-line", flex: 1 }}>
+              {selected !== null
+                ? q.question.replace(/_+/, q.options[q.answer])
+                : q.question}
+            </p>
+            {selected !== null && (
+              <SpeakButton text={q.question.replace(/_+/, q.options[q.answer])} size={34} />
+            )}
           </div>
         </div>
       </div>
@@ -459,10 +433,7 @@ export default function PartPracticePage() {
             }}>
               {selected === q.answer ? "✓ 正解！" : `✗ 不正解　正解は「${["A", "B", "C", "D"][q.answer]}. ${q.options[q.answer]}」`}
             </p>
-            {loadingExplanation
-              ? <p style={{ fontSize: 13, color: "#6B7280" }}>解説を読み込み中…</p>
-              : <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-line" }}>{explanation}</p>
-            }
+            <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-line" }}>{explanation}</p>
           </div>
         )}
 
