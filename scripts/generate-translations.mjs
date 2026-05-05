@@ -46,7 +46,6 @@ function extractQuestions(filePath) {
 
 const allQuestions = [
   ...extractQuestions("../data/questions.ts"),
-  ...extractQuestions("../data/questions-extra.ts"),
 ];
 
 // 未翻訳の問題を抽出
