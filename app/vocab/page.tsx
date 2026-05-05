@@ -185,7 +185,7 @@ export default function VocabPage() {
               <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full">{word.part}</span>
               <div className="flex items-center justify-center gap-2 mt-3">
                 <h2 className="text-2xl font-bold text-slate-800">{word.word}</h2>
-                <SpeakButton text={word.word} size={30} />
+                <SpeakButton text={word.word} audioPath={`/audio/vocab/${word.id}.mp3`} size={30} />
               </div>
               <p className="text-slate-400 text-xs mt-3">タップで意味を確認</p>
             </div>
@@ -194,7 +194,7 @@ export default function VocabPage() {
               <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full">{word.part}</span>
               <div className="flex items-center justify-center gap-2 mt-2">
                 <h2 className="text-2xl font-bold text-slate-800">{word.word}</h2>
-                <SpeakButton text={word.word} size={30} />
+                <SpeakButton text={word.word} audioPath={`/audio/vocab/${word.id}.mp3`} size={30} />
               </div>
               <p className="text-lg font-medium text-blue-600 mt-2">{word.meaning}</p>
             </div>

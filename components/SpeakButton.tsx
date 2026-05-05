@@ -5,9 +5,10 @@ import { useState } from "react";
 type Props = {
   text: string;
   size?: number;
+  audioPath?: string;
 };
 
-export default function SpeakButton({ text, size = 32 }: Props) {
+export default function SpeakButton({ text, size = 32, audioPath }: Props) {
   const [speaking, setSpeaking] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -17,6 +18,16 @@ export default function SpeakButton({ text, size = 32 }: Props) {
     if (speaking) {
       window.speechSynthesis?.cancel();
       setSpeaking(false);
+      return;
+    }
+
+    // 静的音声ファイルがある場合はそちらを再生
+    if (audioPath) {
+      const audio = new Audio(audioPath);
+      setSpeaking(true);
+      audio.onended = () => setSpeaking(false);
+      audio.onerror = () => setSpeaking(false);
+      audio.play().catch(() => setSpeaking(false));
       return;
     }
 
