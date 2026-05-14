@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getStreak, getProgress, getWeakParts } from "@/lib/storage";
+import { HOME_GREETINGS } from "@/lib/petMessages";
 import { questions, DIFFICULTY_LABELS } from "@/data/questions";
 import { vocabulary } from "@/data/vocabulary";
 import { DEFAULT_PET_IMAGES } from "@/lib/petImages";
+import { getActivePetName } from "@/lib/characterStorage";
 import PetScene from "@/components/PetScene";
 
 type PetProfile = { name: string; type: string; emotions?: Record<string, string> };
@@ -20,16 +22,15 @@ const DIFFICULTY_META: Record<number, { label: string; sub: string; color: strin
 
 const buildMenu = (diff: number) => [
   { href: "/quiz",     icon: "🎯", label: "今日の10問", sub: "ランダム出題",                                              color: "#38B2F0", bg: "#E8F6FE" },
-  { href: "/practice", icon: "📖", label: "Part練習",   sub: "Part5・6・7",                                              color: "#A78BFA", bg: "#F3F0FF" },
+  { href: "/part-practice", icon: "📖", label: "Part練習",   sub: "Part5・6・7",                                              color: "#A78BFA", bg: "#F3F0FF" },
   { href: "/vocab",    icon: "📝", label: "単語カード", sub: `頻出${vocabulary.filter((w) => w.difficulty === diff).length}語`, color: "#34D399", bg: "#ECFDF5" },
   { href: "/progress", icon: "📊", label: "進捗",       sub: "記録・正答率",                                             color: "#FB923C", bg: "#FFF4ED" },
 ];
 
 function getGreeting(streak: number): string {
-  if (streak >= 7) return `${streak}日連続！すごい！🎉`;
-  if (streak >= 3) return `${streak}日連続！この調子！🔥`;
-  const msgs = ["今日も一緒に英語やろう！", "待ってたよ！今日も頑張ろう！", "一緒に練習しようね！"];
-  return msgs[Math.floor(Date.now() / 86400000) % msgs.length];
+  if (streak >= 7) return `${streak}日連続！すごい！`;
+  if (streak >= 3) return `${streak}日連続！この調子！`;
+  return HOME_GREETINGS[Math.floor(Date.now() / 86400000) % HOME_GREETINGS.length];
 }
 
 export default function Home() {
@@ -37,6 +38,7 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [changingDifficulty, setChangingDifficulty] = useState(false);
+  const [petName, setPetName] = useState("ペット");
   const [streak, setStreak] = useState(0);
   const [todayStats, setTodayStats] = useState({ correct: 0, total: 0 });
   const [weakParts, setWeakParts] = useState<{ part: string; rate: number }[]>([]);
@@ -44,6 +46,7 @@ export default function Home() {
   useEffect(() => {
     const savedPet = localStorage.getItem("petProfile");
     if (savedPet) setPet(JSON.parse(savedPet));
+    setPetName(getActivePetName());
     const savedDiff = localStorage.getItem("globalDifficulty");
     if (savedDiff) setDifficulty(Number(savedDiff));
     setStreak(getStreak());
@@ -64,7 +67,8 @@ export default function Home() {
   if (!loaded) return null;
 
   // デモ用デフォルトペット（未登録時はデモキャラを使用）
-  const demoPet = pet ?? { name: "ひーちゃん", type: "猫", emotions: DEFAULT_PET_IMAGES };
+  const demoPet = pet ?? { name: petName, type: "猫", emotions: DEFAULT_PET_IMAGES };
+  const activePetName = petName;
 
   // ── ② 目標スコア未設定 or 変更中 ──────────────────────
   if (!difficulty || changingDifficulty) {
@@ -146,7 +150,7 @@ export default function Home() {
         <div>
           <p style={{ fontSize: 13, color: "#7B8FA6", fontWeight: 600 }}>おかえり！</p>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--text)", letterSpacing: "-0.3px", marginTop: 2 }}>
-            {demoPet.name}と練習しよう
+            {petName}と練習しよう
           </h1>
         </div>
         <div style={{
@@ -224,7 +228,7 @@ export default function Home() {
             borderRadius: 16, padding: "14px 18px",
           }}>
             <p style={{ fontSize: 12, fontWeight: 800, color: "#B45309" }}>
-              ⚡ {demoPet.name}がもっと練習しようって言ってるパート
+              ⚡ {petName}がもっと練習しようって言ってるパート
             </p>
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
               {weakParts.slice(0, 2).map((w) => (

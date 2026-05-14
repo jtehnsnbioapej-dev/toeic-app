@@ -73,7 +73,7 @@ export default function ProgressPage() {
         <h1 className="text-xl font-bold mt-3">進捗確認</h1>
       </div>
 
-      <PetScene message={petMessage} />
+      <PetScene message={petMessage} bg="/校庭.png" />
 
       <div className="px-5 mt-2 space-y-4">
         {/* Stats grid */}

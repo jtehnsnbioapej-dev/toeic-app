@@ -35,7 +35,7 @@ function extractQuestions(filePath) {
   let m;
   while ((m = re.exec(src)) !== null) {
     const id = parseInt(m[1]);
-    const question = m[2].replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+    const question = m[2].replace(/\\"/g, '"').replace(/\\\\/g, "\\").replace(/\\n/g, "\n");
     const optionsRaw = m[3].match(/"((?:[^"\\]|\\.)*)"/g) || [];
     const options = optionsRaw.map((o) => o.slice(1, -1).replace(/\\"/g, '"'));
     const answer = parseInt(m[4]);

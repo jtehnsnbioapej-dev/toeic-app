@@ -8,13 +8,13 @@ import { Emotion, PetImages } from "@/components/PetSprite";
 
 type Message = { role: "user" | "assistant"; content: string };
 
-const EMOTIONS: Emotion[] = ["idle", "happy", "sad", "think", "surprise"];
+const EMOTIONS: Emotion[] = ["idle", "happy", "sad", "think", "excited"];
 const EMOTION_LABELS: Record<Emotion, string> = {
   idle: "通常",
   happy: "うれしい",
   sad: "かなしい",
   think: "かんがえ中",
-  surprise: "びっくり",
+  excited: "こうふん",
 };
 
 export default function PetChatPage() {

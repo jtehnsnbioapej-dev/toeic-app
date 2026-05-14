@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 // 背景除去（緑・マゼンタの単色背景を透明化）
-const BG_CACHE_VERSION = 5;
+const BG_CACHE_VERSION = 6;
 const bgCache = new Map<string, string>();
 function removeBg(src: string): Promise<string> {
   const cacheKey = `${src}@v${BG_CACHE_VERSION}`;
@@ -67,6 +67,13 @@ function removeBg(src: string): Promise<string> {
           }
         }
 
+        // フラッドフィルで届かなかった囲み領域（足の間など）を全スキャンで透過
+        for (let pos = 0; pos < w * h; pos++) {
+          if (visited[pos]) continue;
+          const i = pos * 4;
+          if (isBg(d[i], d[i+1], d[i+2])) d[i+3] = 0;
+        }
+
         ctx.putImageData(id, 0, 0);
         const result = canvas.toDataURL("image/png");
         bgCache.set(cacheKey, result);
@@ -82,14 +89,14 @@ function removeBg(src: string): Promise<string> {
   });
 }
 
-export type Emotion = "idle" | "happy" | "sad" | "think" | "surprise";
+export type Emotion = "idle" | "happy" | "sad" | "think" | "excited";
 export type PetImages = Partial<Record<Emotion, string>>;
 
 const EMOTION_BADGE: Partial<Record<Emotion, string>> = {
   happy: "😊",
   sad: "😢",
   think: "🤔",
-  surprise: "😲",
+  excited: "🤩",
 };
 
 interface Props {
@@ -143,7 +150,7 @@ const ANIM: Record<Emotion, React.CSSProperties> = {
   happy:    { animation: "psBounce 0.6s ease-in-out 1" },
   sad:      { animation: "psWobble 0.7s ease-in-out 1", filter: "brightness(0.85) saturate(0.7)" },
   think:    { animation: "psTilt 2.2s ease-in-out 1" },
-  surprise: { animation: "psPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both" },
+  excited: { animation: "psPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both" },
 };
 
 export default function PetSprite({ images, emotion, size = 150, noAnimate = false }: Props) {

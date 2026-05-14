@@ -127,7 +127,7 @@ export default function PracticePage() {
                 : q.question}
             </p>
             {selected !== null && (
-              <SpeakButton text={q.question.replace(/_+/, q.options[q.answer])} size={34} />
+              <SpeakButton text={q.question.replace(/_+/, q.options[q.answer])} audioPath={`/audio/questions/q-${q.id}.mp3`} size={34} />
             )}
           </div>
         </div>

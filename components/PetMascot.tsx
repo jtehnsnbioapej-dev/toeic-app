@@ -8,7 +8,7 @@ type Props = { message: string; isLoading?: boolean };
 type PetProfile = { name: string; emotions?: PetImages };
 
 function inferEmotion(msg: string): Emotion {
-  if (/パーフェクト|すごすぎ|全問正解|最高|めちゃくちゃ/.test(msg)) return "surprise";
+  if (/パーフェクト|すごすぎ|全問正解|最高|めちゃくちゃ/.test(msg)) return "excited";
   if (/正解|さすが|いいね|覚えた|伸びてる|連続|習得|頑張って/.test(msg)) return "happy";
   if (/惜しい|不正解|大丈夫|間違|もう一度|難しい/.test(msg)) return "sad";
   return "idle";

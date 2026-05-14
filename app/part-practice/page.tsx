@@ -5,51 +5,75 @@ import Link from "next/link";
 import { questions, Question, DIFFICULTY_LABELS } from "@/data/questions";
 import translationsMap from "@/data/question-translations.json";
 import { saveTodayProgress } from "@/lib/storage";
+import { stopCurrentAudio } from "@/lib/audioManager";
+import { CORRECT_MESSAGES, WRONG_MESSAGES, QUESTION_MESSAGES, PART1_MESSAGES, PART2_MESSAGES, PART7_MESSAGES, EXCITED_MESSAGES } from "@/lib/petMessages";
 import PetScene from "@/components/PetScene";
 import SpeakButton from "@/components/SpeakButton";
 
-const QUIZ_COUNT = 10;
+const SESSION_SIZE: Record<1 | 2 | 3 | 5 | 6 | 7, number> = { 1: 5, 2: 10, 3: 9, 5: 10, 6: 10, 7: 5 };
 
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
+const PART3_MESSAGES = [
+  "会話を聞いてから答えてね！",
+  "もう一度聞きたいときは再生ボタンで！",
+  "落ち着いて聞けば大丈夫！",
+  "会話の流れをイメージしながら聞こう！",
+  "キーワードを拾いながら聞いてね！",
+];
+const LAST_SCORE_KEY = "partPracticeLastScore";
+
+type LastScore = { correct: number; total: number };
+type LastScoreMap = Record<string, LastScore>;
+
+function sessionScoreKey(part: number, difficulty: number, sessionIdx: number) {
+  return `${part}_${difficulty}_${sessionIdx}`;
+}
+
+function loadLastScores(): LastScoreMap {
+  try { return JSON.parse(localStorage.getItem(LAST_SCORE_KEY) ?? "{}"); }
+  catch { return {}; }
+}
+
+function saveLastScore(part: number, difficulty: number, sessionIdx: number, correct: number, total: number) {
+  const map = loadLastScores();
+  map[sessionScoreKey(part, difficulty, sessionIdx)] = { correct, total };
+  localStorage.setItem(LAST_SCORE_KEY, JSON.stringify(map));
+}
+
+function buildSessions(part: 1 | 2 | 3 | 5 | 6 | 7, difficulty: number): Question[][] {
+  const filtered = questions
+    .filter((q) => q.part === part && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese))
+    .sort((a, b) => a.id - b.id);
+  const size = SESSION_SIZE[part];
+  const chunks: Question[][] = [];
+  for (let i = 0; i < filtered.length; i += size) {
+    chunks.push(filtered.slice(i, i + size));
+  }
+  return chunks;
 }
 
 function shuffleOptions(q: Question): Question {
   const correct = q.options[q.answer];
-  const shuffled = shuffle(q.options);
+  const shuffled = [...q.options].sort(() => Math.random() - 0.5);
   return { ...q, options: shuffled, answer: shuffled.indexOf(correct) };
 }
 
 const isJapanese = (s: string) => /[\u3000-\u9FFF]/.test(s);
 
 const PART_INFO: Record<number, { label: string; desc: string; icon: string }> = {
-  5: { label: "Part 5", desc: "短文穴埋め", icon: "✏️" },
-  6: { label: "Part 6", desc: "長文穴埋め", icon: "📄" },
-  7: { label: "Part 7", desc: "読解問題",   icon: "📖" },
+  1: { label: "Part 1", desc: "写真描写問題", icon: "📷" },
+  2: { label: "Part 2", desc: "応答問題",     icon: "🎧" },
+  3: { label: "Part 3", desc: "会話問題",     icon: "🗣️" },
+  5: { label: "Part 5", desc: "短文穴埋め",   icon: "✏️" },
+  6: { label: "Part 6", desc: "長文穴埋め",   icon: "📄" },
+  7: { label: "Part 7", desc: "読解問題",     icon: "📖" },
 };
 
-const CORRECT_MESSAGES = [
-  "正解！やるじゃん！🎉",
-  "さすが！その調子だよ！",
-  "完璧！頭いいね〜！",
-  "正解〜！一緒に頑張ろうね！",
-];
-const WRONG_MESSAGES = [
-  "惜しい！でも大丈夫、一緒に覚えよう！",
-  "次は絶対正解できるよ！",
-  "難しいとこだよね、解説見てみよう！",
-  "間違えたところが一番の学びだよ！",
-];
-const QUESTION_MESSAGES = [
-  "この空欄に入るのはどれ？",
-  "さあ、空欄を埋めてみて！",
-  "この文を完成させて！",
-  "どれが正しいか分かる？",
-];
 
 export default function PartPracticePage() {
-  const [selectedPart, setSelectedPart] = useState<5 | 6 | 7 | null>(null);
+  const [selectedPart, setSelectedPart] = useState<1 | 2 | 3 | 5 | 6 | 7 | null>(null);
   const [difficulty, setDifficulty] = useState<number>(3);
+  const [sessions, setSessions] = useState<Question[][]>([]);
+  const [selectedSession, setSelectedSession] = useState<number | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -59,23 +83,29 @@ export default function PartPracticePage() {
   const [petMessage, setPetMessage] = useState("どのパートを練習する？");
   const [speaker, setSpeaker] = useState<"left" | "right">("right");
   const [userChoice, setUserChoice] = useState<string | null>(null);
-  const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "surprise">("idle");
+  const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "excited">("idle");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
   const [translation, setTranslation] = useState<string>("");
+  const [lastScores, setLastScores] = useState<LastScoreMap>({});
 
   useEffect(() => {
     const saved = localStorage.getItem("globalDifficulty");
     if (saved) setDifficulty(Number(saved));
+    setLastScores(loadLastScores());
   }, []);
 
-  const startPart = (part: 5 | 6 | 7) => {
-    const filtered = questions.filter((q) =>
-      q.part === part && q.difficulty === difficulty &&
-      !isJapanese(q.question) && !q.options.some(isJapanese)
-    );
-    const picked = shuffle(filtered).slice(0, QUIZ_COUNT).map(shuffleOptions);
+  const selectPart = (part: 1 | 2 | 3 | 5 | 6 | 7) => {
     setSelectedPart(part);
-    setQuizQuestions(picked);
+    setSessions(buildSessions(part, difficulty));
+    setSelectedSession(null);
+    setPetMessage("セッションを選んでね！");
+  };
+
+  const startSession = (sessionIdx: number) => {
+    // Part 1/2/3 は選択肢シャッフルなし（音声順序または会話順序を維持）
+    const qs = sessions[sessionIdx].map(q => (selectedPart === 1 || selectedPart === 2 || selectedPart === 3) ? q : shuffleOptions(q));
+    setSelectedSession(sessionIdx);
+    setQuizQuestions(qs);
     setCurrent(0);
     setSelected(null);
     setResults([]);
@@ -84,21 +114,35 @@ export default function PartPracticePage() {
     setUserChoice(null);
     setPetEffect(null);
     setUserEmotion("think");
-    setPetMessage(QUESTION_MESSAGES[0]);
+    setPetMessage(
+      selectedPart === 1 ? PART1_MESSAGES[0] :
+      selectedPart === 2 ? PART2_MESSAGES[0] :
+      selectedPart === 3 ? PART3_MESSAGES[0] :
+      selectedPart === 7 ? PART7_MESSAGES[0] :
+      QUESTION_MESSAGES[0]
+    );
+    window.scrollTo(0, 0);
   };
 
   const q = quizQuestions[current];
 
   const handleSelect = (idx: number) => {
     if (selected !== null || !q) return;
+    stopCurrentAudio();
     setSelected(idx);
     const correct = idx === q.answer;
-    setResults((prev) => [...prev, correct]);
+    const newResults = [...results, correct];
+    setResults(newResults);
     saveTodayProgress(correct ? 1 : 0, 1, q.part);
 
-    const reaction = correct
-      ? CORRECT_MESSAGES[Math.floor(Math.random() * CORRECT_MESSAGES.length)]
-      : WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
+    // 3問連続正解チェック（今回含む直近3問）
+    const streak3 = correct && newResults.length >= 3 && newResults.slice(-3).every(Boolean);
+
+    const reaction = streak3
+      ? EXCITED_MESSAGES[Math.floor(Math.random() * EXCITED_MESSAGES.length)]
+      : correct
+        ? CORRECT_MESSAGES[Math.floor(Math.random() * CORRECT_MESSAGES.length)]
+        : WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
 
     setUserChoice(`${["A", "B", "C", "D"][idx]}！`);
     setSpeaker("right");
@@ -106,7 +150,6 @@ export default function PartPracticePage() {
     setExplanation(q.explanation);
     setTranslation("");
 
-    // 問題文の日本語訳をJSONから取得（なければAPIにフォールバック）
     const cachedJa = (translationsMap as Record<string, string>)[String(q.id)];
     if (cachedJa) {
       setTranslation(cachedJa);
@@ -122,14 +165,15 @@ export default function PartPracticePage() {
     }
 
     setPetEffect(correct ? "correct" : "wrong");
-    setTimeout(() => {
-      setUserEmotion(correct ? "happy" : "sad");
-    }, 100);
+    setTimeout(() => { setUserEmotion(streak3 ? "excited" : correct ? "happy" : "sad"); }, 100);
   };
 
   const handleNext = () => {
     setPetEffect(null);
     if (current + 1 >= quizQuestions.length) {
+      const finalCorrect = results.filter(Boolean).length;
+      saveLastScore(selectedPart!, difficulty, selectedSession!, finalCorrect, results.length);
+      setLastScores(loadLastScores());
       setFinished(true);
     } else {
       setCurrent(current + 1);
@@ -139,7 +183,14 @@ export default function PartPracticePage() {
       setSpeaker("right");
       setUserChoice(null);
       setUserEmotion("think");
-      setPetMessage(QUESTION_MESSAGES[Math.floor(Math.random() * QUESTION_MESSAGES.length)]);
+      setPetMessage(
+        selectedPart === 1 ? PART1_MESSAGES[Math.floor(Math.random() * PART1_MESSAGES.length)] :
+        selectedPart === 2 ? PART2_MESSAGES[Math.floor(Math.random() * PART2_MESSAGES.length)] :
+        selectedPart === 3 ? PART3_MESSAGES[Math.floor(Math.random() * PART3_MESSAGES.length)] :
+        selectedPart === 7 ? PART7_MESSAGES[Math.floor(Math.random() * PART7_MESSAGES.length)] :
+        QUESTION_MESSAGES[Math.floor(Math.random() * QUESTION_MESSAGES.length)]
+      );
+      window.scrollTo(0, 0);
     }
   };
 
@@ -167,22 +218,18 @@ export default function PartPracticePage() {
         <div style={{ padding: "20px 20px 100px" }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-sub)", marginBottom: 12 }}>パートを選んでください</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {([5, 6, 7] as const).map((part) => {
+            {([1, 2, 3, 5, 6, 7] as const).map((part) => {
               const info = PART_INFO[part];
-              const count = questions.filter(
-                (q) => q.part === part && q.difficulty === difficulty &&
-                !isJapanese(q.question) && !q.options.some(isJapanese)
+              const totalQ = questions.filter(
+                (q) => q.part === part && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
               ).length;
               return (
                 <button
                   key={part}
-                  onClick={() => startPart(part)}
+                  onClick={() => selectPart(part)}
                   style={{
-                    background: "#fff",
-                    border: "1.5px solid #E5E7EB",
-                    borderRadius: 18,
-                    padding: "18px 20px",
-                    display: "flex", alignItems: "center", gap: 16,
+                    background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 18,
+                    padding: "18px 20px", display: "flex", alignItems: "center", gap: 16,
                     textAlign: "left", cursor: "pointer",
                     boxShadow: "0 2px 10px rgba(56,178,240,0.08)",
                   }}
@@ -197,11 +244,95 @@ export default function PartPracticePage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 800, fontSize: 16, color: "var(--text)" }}>{info.label}</p>
-                    <p style={{ fontSize: 13, color: "var(--text-sub)", marginTop: 2, fontWeight: 600 }}>{info.desc}</p>
+                    <p style={{ fontSize: 13, color: "var(--text-sub)", marginTop: 2, fontWeight: 600 }}>
+                      {info.desc} · 全{totalQ}問
+                    </p>
+                  </div>
+                  <span style={{ color: "#D1D5DB", fontSize: 18 }}>›</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── セッション選択画面 ──────────────────────────────
+  if (selectedPart !== null && selectedSession === null && !finished) {
+    const info = PART_INFO[selectedPart];
+    return (
+      <div className="page-wrap min-h-screen" style={{ background: "var(--bg)" }}>
+        <div style={{
+          background: "linear-gradient(180deg, #C9EEFF 0%, #EBF8FF 100%)",
+          padding: "16px 20px 12px",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <button
+              onClick={() => { setSelectedPart(null); setPetMessage("どのパートを練習する？"); }}
+              style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            >
+              ← パート選択
+            </button>
+            <div style={{
+              background: "rgba(56,178,240,0.15)", borderRadius: 20, padding: "4px 12px",
+              fontSize: 12, fontWeight: 800, color: "var(--primary)",
+            }}>
+              {info.label} · {DIFFICULTY_LABELS[difficulty]}
+            </div>
+          </div>
+        </div>
+
+        <PetScene message="セッションを選んでね！" leftEmotion="idle" bg="/図書館.png" />
+
+        <div style={{ padding: "20px 20px 100px" }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-sub)", marginBottom: 12 }}>
+            {info.label} — セッション一覧（{SESSION_SIZE[selectedPart]}問/セッション{selectedPart === 3 ? " · 3問×1会話" : ""}）
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {sessions.map((sessionQs, idx) => {
+              const ls = lastScores[sessionScoreKey(selectedPart, difficulty, idx)];
+              const rate = ls ? Math.round((ls.correct / ls.total) * 100) : null;
+              const rateColor = rate === null ? "#9CA3AF" : rate >= 80 ? "#059669" : rate >= 60 ? "#D97706" : "#DC2626";
+              return (
+                <button
+                  key={idx}
+                  onClick={() => startSession(idx)}
+                  style={{
+                    background: "#fff", border: "1.5px solid #E5E7EB", borderRadius: 16,
+                    padding: "14px 18px", display: "flex", alignItems: "center", gap: 14,
+                    textAlign: "left", cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(56,178,240,0.07)",
+                  }}
+                >
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                    background: ls ? "linear-gradient(135deg, #EBF8FF, #C9EEFF)" : "#F9FAFB",
+                    border: ls ? "none" : "1.5px solid #E5E7EB",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 13, fontWeight: 900, color: ls ? "var(--primary)" : "#9CA3AF",
+                  }}>
+                    {idx + 1}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>
+                      Session {idx + 1}
+                    </p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: 11, color: "var(--text-sub)", fontWeight: 600 }}>{count}問</p>
-                    <span style={{ color: "#D1D5DB", fontSize: 18 }}>›</span>
+                    {ls ? (
+                      <>
+                        <p style={{ fontSize: 13, fontWeight: 800, color: rateColor }}>
+                          {ls.correct}/{ls.total}問
+                        </p>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: rateColor }}>
+                          {rate}%
+                        </p>
+                      </>
+                    ) : (
+                      <p style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 600 }}>未挑戦</p>
+                    )}
+                    <span style={{ color: "#D1D5DB", fontSize: 16 }}>›</span>
                   </div>
                 </button>
               );
@@ -228,12 +359,15 @@ export default function PartPracticePage() {
           background: "linear-gradient(180deg, #C9EEFF 0%, #EBF8FF 100%)",
           padding: "16px 20px 12px",
         }}>
-          <Link href="/part-practice" onClick={() => setSelectedPart(null)} style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700, textDecoration: "none" }}>
-            ← パート選択
-          </Link>
+          <button
+            onClick={() => { setSelectedSession(null); setFinished(false); setPetMessage("セッションを選んでね！"); }}
+            style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            ← セッション一覧
+          </button>
         </div>
 
-        <PetScene message={finishMsg} bg={selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"} />
+        <PetScene message={finishMsg} leftEmotion={rate >= 80 ? "excited" : "idle"} bg={selectedPart === 1 ? "/自室.png" : selectedPart === 2 ? "/自室.png" : selectedPart === 3 ? "/自室.png" : selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"} />
 
         <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{
@@ -241,7 +375,7 @@ export default function PartPracticePage() {
             textAlign: "center", boxShadow: "0 4px 20px rgba(56,178,240,0.12)",
           }}>
             <p style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700 }}>
-              {PART_INFO[selectedPart].label} · 目標 {DIFFICULTY_LABELS[difficulty]} · {results.length}問
+              {PART_INFO[selectedPart!].label} · Session {selectedSession! + 1} · {DIFFICULTY_LABELS[difficulty]}
             </p>
             <p style={{ fontSize: 64, fontWeight: 900, color: "var(--text)", lineHeight: 1.1, marginTop: 8 }}>
               {correct}
@@ -265,7 +399,7 @@ export default function PartPracticePage() {
           </div>
 
           <button
-            onClick={() => startPart(selectedPart)}
+            onClick={() => startSession(selectedSession!)}
             style={{
               background: "linear-gradient(135deg, #38B2F0, #1A90D4)",
               color: "#fff", borderRadius: 18, padding: "16px 0",
@@ -273,17 +407,17 @@ export default function PartPracticePage() {
               boxShadow: "0 4px 16px rgba(56,178,240,0.35)",
             }}
           >
-            {PART_INFO[selectedPart].label} をもう一度
+            Session {selectedSession! + 1} をもう一度
           </button>
           <button
-            onClick={() => { setSelectedPart(null); setPetMessage("どのパートを練習する？"); }}
+            onClick={() => { setSelectedSession(null); setFinished(false); setPetMessage("セッションを選んでね！"); }}
             style={{
               background: "#fff", border: "2px solid #E5E7EB",
               borderRadius: 18, padding: "14px 0",
               fontWeight: 800, fontSize: 15, color: "var(--text)", cursor: "pointer",
             }}
           >
-            パートを選び直す
+            セッション一覧に戻る
           </button>
         </div>
       </div>
@@ -328,20 +462,86 @@ export default function PartPracticePage() {
         </div>
 
         <div style={{ position: "relative" }}>
-          <PetScene message={petMessage} leftMessage={userChoice ?? undefined} speaker={speaker} leftEmotion={userEmotion} petEffect={petEffect} bg={selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"} />
+          <PetScene
+            message={petMessage}
+            leftMessage={userChoice ?? undefined}
+            speaker={speaker}
+            leftEmotion={userEmotion}
+            petEffect={petEffect}
+            bg={selectedPart === 1 ? "/自室.png" : selectedPart === 2 ? "/自室.png" : selectedPart === 3 ? "/自室.png" : selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"}
+            speakText={(selectedPart === 1 || selectedPart === 2) ? q.question || `A. ${q.options[0]}` : undefined}
+            speakAudioPath={(selectedPart === 1 || selectedPart === 2) ? `/audio/part${selectedPart}/q-${q.id}.mp3` : undefined}
+          />
 
-          {/* 選択肢オーバーレイ */}
+          {/* 選択肢オーバーレイ - Part 1/2のみ: A/B/C レターボタン */}
+          {(selectedPart === 1 || selectedPart === 2) && (
           <div style={{
             position: "absolute",
-            top: "62%",
+            top: 14,
             left: "50%",
-            transform: "translate(-50%, -50%)",
+            transform: "translateX(-50%)",
             width: "36%",
             display: "flex",
             flexDirection: "column",
             gap: 4,
             zIndex: 6,
+          }}>
+            {q.options.map((_, idx) => {
+              let bg = "rgba(255,255,255,0.88)";
+              let border = "1px solid rgba(229,231,235,0.7)";
+              let color = "var(--text)";
+              if (selected !== null) {
+                if (idx === q.answer) { bg = "rgba(240,253,244,0.95)"; border = "1px solid #22C55E"; color = "#166534"; }
+                else if (idx === selected) { bg = "rgba(255,241,242,0.95)"; border = "1px solid #F87171"; color = "#9F1239"; }
+                else { color = "#9CA3AF"; bg = "rgba(255,255,255,0.65)"; }
+              }
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSelect(idx)}
+                  disabled={selected !== null}
+                  style={{
+                    background: bg, border, borderRadius: 12,
+                    padding: "8px 10px", cursor: selected !== null ? "default" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    backdropFilter: "blur(6px)",
+                    pointerEvents: "auto",
+                  }}
+                >
+                  <span style={{
+                    width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                    background: selected !== null
+                      ? (idx === q.answer ? "#22C55E" : idx === selected ? "#F87171" : "#F3F4F6")
+                      : "#EFF6FF",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 800,
+                    color: selected !== null
+                      ? (idx === q.answer || idx === selected ? "#fff" : "#9CA3AF")
+                      : "var(--primary)",
+                  }}>
+                    {["A", "B", "C", "D"][idx]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          )}
+
+          {/* 選択肢オーバーレイ - Part 3/5/6/7: テキスト付き */}
+          {selectedPart !== 1 && selectedPart !== 2 && (
+          <div style={{
+            position: "absolute",
+            top: 14,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "36%",
+            maxHeight: 238,
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            zIndex: 6,
             pointerEvents: "none",
+            overflowY: "auto",
           }}>
             {q.options.map((opt, idx) => {
               let bg = "rgba(255,255,255,0.88)";
@@ -383,6 +583,7 @@ export default function PartPracticePage() {
               );
             })}
           </div>
+          )}
 
           {selected !== null && (
             <button
@@ -402,6 +603,98 @@ export default function PartPracticePage() {
         </div>
       </div>
 
+      {/* Part 3: 会話音声カード */}
+      {selectedPart === 3 && (() => {
+        const convNum = Math.ceil((q.id - 3000) / 3);
+        const withinConv = ((q.id - 3001) % 3) + 1;
+        return (
+          <div style={{ padding: "14px 20px 6px" }}>
+            <div style={{
+              background: "#fff", borderRadius: 18, padding: "14px 18px",
+              boxShadow: "0 2px 12px rgba(56,178,240,0.12)",
+              border: "1.5px solid #C9EEFF",
+              display: "flex", alignItems: "center", gap: 14,
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                background: "linear-gradient(135deg, #38B2F0, #1A90D4)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <SpeakButton
+                  text=""
+                  audioPath={`/audio/part3/conv-${convNum}.mp3`}
+                  size={28}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: "var(--primary)", margin: 0 }}>
+                  会話を聞く
+                </p>
+                <p style={{ fontSize: 12, color: "#94A3B8", margin: "3px 0 0", fontWeight: 600 }}>
+                  この会話の問題 {withinConv} / 3
+                </p>
+              </div>
+              <div style={{
+                background: "rgba(56,178,240,0.1)", borderRadius: 10, padding: "4px 10px",
+                fontSize: 11, fontWeight: 800, color: "var(--primary)",
+              }}>
+                会話 {convNum}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Part 1: 写真 */}
+      {selectedPart === 1 && q.imagePath && (
+        <div style={{ padding: "16px 20px 8px" }}>
+          <img
+            src={q.imagePath}
+            alt="写真"
+            style={{ width: "100%", borderRadius: 20, maxHeight: 300, objectFit: "cover", display: "block" }}
+          />
+        </div>
+      )}
+
+      {/* Part 2: 回答後 — 質問文表示 */}
+      {selectedPart === 2 && selected !== null && (
+        <div style={{ padding: "12px 20px 4px" }}>
+          <div style={{ background: "#F8FAFC", borderRadius: 12, padding: "10px 14px" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", marginBottom: 4 }}>質問</p>
+            <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.65, margin: 0 }}>{q.question}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Part 1/2: 回答後 — 選択肢テキスト + 日本語訳 */}
+      {(selectedPart === 1 || selectedPart === 2) && selected !== null && (
+        <div style={{ padding: "8px 20px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {q.options.map((opt, idx) => {
+            const isCorrect = idx === q.answer;
+            const isWrong = idx === selected && !isCorrect;
+            const textColor = isCorrect ? "#166534" : isWrong ? "#9F1239" : "#6B7280";
+            const bg = isCorrect ? "#F0FDF4" : isWrong ? "#FFF1F2" : "transparent";
+            return (
+              <div key={idx} style={{ background: bg, borderRadius: 10, padding: "8px 10px" }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: textColor, minWidth: 20, flexShrink: 0 }}>
+                    {["A", "B", "C", "D"][idx]}.
+                  </span>
+                  <div>
+                    <p style={{ fontSize: 13, color: textColor, fontWeight: isCorrect || isWrong ? 700 : 600, lineHeight: 1.5, margin: 0 }}>{opt}</p>
+                    {q.translations?.[idx] && (
+                      <p style={{ fontSize: 12, color: "#6B7280", marginTop: 2, lineHeight: 1.4, margin: "2px 0 0" }}>{q.translations[idx]}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Part 3/5/6/7: 問題文 */}
+      {selectedPart !== 1 && selectedPart !== 2 && (
       <div style={{ padding: "0 20px 14px", background: "var(--bg)" }}>
         <div style={{
           background: "#fff", borderRadius: 20, padding: "20px",
@@ -414,11 +707,12 @@ export default function PartPracticePage() {
                 : q.question}
             </p>
             {selected !== null && (
-              <SpeakButton text={q.question.replace(/_+/, q.options[q.answer])} size={34} />
+              <SpeakButton text={q.question.replace(/_+/, q.options[q.answer])} audioPath={`/audio/questions/q-${q.id}.mp3`} size={34} />
             )}
           </div>
         </div>
       </div>
+      )}
 
       <div style={{ padding: "0 20px" }}>
         {selected !== null && (
@@ -437,8 +731,8 @@ export default function PartPracticePage() {
           </div>
         )}
 
-        {/* 問題文の日本語訳 */}
-        {selected !== null && (
+        {/* 問題文の日本語訳 - Part 5/6/7のみ（Part 3はリスニングなので不要） */}
+        {selected !== null && selectedPart !== 1 && selectedPart !== 2 && selectedPart !== 3 && (
           <div style={{
             marginTop: 10, borderRadius: 16, padding: "12px 16px",
             background: "#F8FAFC", border: "1px solid #E2E8F0",

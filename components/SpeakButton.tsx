@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { playManagedAudio, stopCurrentAudio } from "@/lib/audioManager";
 
 type Props = {
   text: string;
@@ -16,6 +17,7 @@ export default function SpeakButton({ text, size = 32, audioPath }: Props) {
     e.stopPropagation();
 
     if (speaking) {
+      stopCurrentAudio();
       window.speechSynthesis?.cancel();
       setSpeaking(false);
       return;
@@ -23,11 +25,8 @@ export default function SpeakButton({ text, size = 32, audioPath }: Props) {
 
     // 静的音声ファイルがある場合はそちらを再生
     if (audioPath) {
-      const audio = new Audio(audioPath);
       setSpeaking(true);
-      audio.onended = () => setSpeaking(false);
-      audio.onerror = () => setSpeaking(false);
-      audio.play().catch(() => setSpeaking(false));
+      playManagedAudio(audioPath, () => setSpeaking(false), () => setSpeaking(false));
       return;
     }
 

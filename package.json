@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-audio": "node scripts/generate-audio.mjs",
+    "generate-part3-audio": "node scripts/generate-part3-audio.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",

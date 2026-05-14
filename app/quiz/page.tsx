@@ -5,6 +5,7 @@ import Link from "next/link";
 import { questions, Question, DIFFICULTY_LABELS } from "@/data/questions";
 import translationsMap from "@/data/question-translations.json";
 import { saveTodayProgress } from "@/lib/storage";
+import { CORRECT_MESSAGES, WRONG_MESSAGES, QUESTION_MESSAGES, EXCITED_MESSAGES } from "@/lib/petMessages";
 import PetScene from "@/components/PetScene";
 import SpeakButton from "@/components/SpeakButton";
 
@@ -24,27 +25,6 @@ function shuffleOptions(q: Question): Question {
 // 日本語文字を含む問題を除外
 const isJapanese = (s: string) => /[\u3000-\u9FFF]/.test(s);
 
-const CORRECT_MESSAGES = [
-  "正解！やるじゃん！🎉",
-  "さすが！その調子だよ！",
-  "完璧！頭いいね〜！",
-  "正解〜！一緒に頑張ろうね！",
-];
-
-const WRONG_MESSAGES = [
-  "惜しい！でも大丈夫、一緒に覚えよう！",
-  "次は絶対正解できるよ！",
-  "難しいとこだよね、解説見てみよう！",
-  "間違えたところが一番の学びだよ！",
-];
-
-const QUESTION_MESSAGES = [
-  "この空欄に入るのはどれ？",
-  "さあ、空欄を埋めてみて！",
-  "この文を完成させて！",
-  "どれが正しいか分かる？",
-];
-
 export default function QuizPage() {
   const [difficulty, setDifficulty] = useState<number>(3);
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
@@ -58,7 +38,7 @@ export default function QuizPage() {
   );
   const [speaker, setSpeaker] = useState<"left" | "right">("right");
   const [userChoice, setUserChoice] = useState<string | null>(null);
-  const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "surprise">("think");
+  const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "excited">("think");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
   const [translation, setTranslation] = useState<string>("");
 
@@ -68,11 +48,11 @@ export default function QuizPage() {
     if (saved) setDifficulty(Number(saved));
   }, []);
 
-  // 難易度が決まったら問題をセット
+  // 難易度が決まったら問題をセット（Part5・6・7のみ）
   useEffect(() => {
     if (difficulty === null) return;
     const filtered = questions.filter((q) =>
-      q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
+      [5, 6, 7].includes(q.part) && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
     );
     const picked = shuffle(filtered).slice(0, QUIZ_COUNT).map(shuffleOptions);
     setQuizQuestions(picked);
@@ -94,9 +74,14 @@ export default function QuizPage() {
     setResults(newResults);
     saveTodayProgress(correct ? 1 : 0, 1, q.part);
 
-    const reaction = correct
-      ? CORRECT_MESSAGES[Math.floor(Math.random() * CORRECT_MESSAGES.length)]
-      : WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
+    // 3問連続正解チェック（今回含む直近3問）
+    const streak3 = correct && newResults.length >= 3 && newResults.slice(-3).every(Boolean);
+
+    const reaction = streak3
+      ? EXCITED_MESSAGES[Math.floor(Math.random() * EXCITED_MESSAGES.length)]
+      : correct
+        ? CORRECT_MESSAGES[Math.floor(Math.random() * CORRECT_MESSAGES.length)]
+        : WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
 
     // 左キャラが選んだ答えを言う → ペットが反応
     const choiceLabel = ["A", "B", "C", "D"][idx];
@@ -124,7 +109,7 @@ export default function QuizPage() {
 
     setPetEffect(correct ? "correct" : "wrong");
     setTimeout(() => {
-      setUserEmotion(correct ? "happy" : "sad");
+      setUserEmotion(streak3 ? "excited" : correct ? "happy" : "sad");
     }, 100);
   };
 
@@ -141,6 +126,7 @@ export default function QuizPage() {
       setUserChoice(null);
       setUserEmotion("think");
       setPetMessage(QUESTION_MESSAGES[Math.floor(Math.random() * QUESTION_MESSAGES.length)]);
+      window.scrollTo(0, 0);
     }
   };
 
@@ -159,6 +145,7 @@ export default function QuizPage() {
     setPetEffect(null);
     setTranslation("");
     setPetMessage(QUESTION_MESSAGES[0]);
+    window.scrollTo(0, 0);
   };
 
   if (quizQuestions.length === 0) {
@@ -190,7 +177,7 @@ export default function QuizPage() {
           </Link>
         </div>
 
-        <PetScene message={finishMsg} bg="/教室.png" />
+        <PetScene message={finishMsg} leftEmotion={rate >= 80 ? "excited" : "idle"} bg="/教室.png" />
 
         <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
           {/* スコアカード */}
@@ -304,15 +291,17 @@ export default function QuizPage() {
         {/* 選択肢オーバーレイ（中央横幅60%・縦中央・キャラ顔は左右に残る） */}
         <div style={{
           position: "absolute",
-          top: "62%",
+          top: 14,
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: "translateX(-50%)",
           width: "36%",
+          maxHeight: 238,
           display: "flex",
           flexDirection: "column",
           gap: 4,
           zIndex: 6,
           pointerEvents: "none",
+          overflowY: "auto",
         }}>
           {q.options.map((opt, idx) => {
             let bg = "rgba(255,255,255,0.88)";

@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/",               icon: "🏠", label: "ホーム"   },
-  { href: "/quiz",           icon: "🎯", label: "クイズ"   },
-  { href: "/part-practice",  icon: "📚", label: "パート"   },
-  { href: "/vocab",          icon: "📝", label: "単語"     },
-  { href: "/progress",       icon: "📊", label: "進捗"     },
+  { href: "/",              icon: "🏠", label: "ホーム" },
+  { href: "/quiz",          icon: "🎯", label: "クイズ" },
+  { href: "/part-practice", icon: "📚", label: "パート" },
+  { href: "/vocab",         icon: "📝", label: "単語"   },
+  { href: "/progress",      icon: "📊", label: "進捗"   },
+  { href: "/settings",      icon: "⚙️", label: "設定"   },
 ];
 
 export default function BottomNav() {
@@ -32,14 +33,14 @@ export default function BottomNav() {
           <Link key={item.href} href={item.href} style={{
             flex: 1, display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
-            gap: 3, textDecoration: "none",
+            gap: 2, textDecoration: "none",
             paddingBottom: 6,
           }}>
-            <span style={{ fontSize: active ? 26 : 22, transition: "font-size 0.15s" }}>
+            <span style={{ fontSize: active ? 22 : 19, transition: "font-size 0.15s" }}>
               {item.icon}
             </span>
             <span style={{
-              fontSize: 10, fontWeight: active ? 800 : 600,
+              fontSize: 9, fontWeight: active ? 800 : 600,
               color: active ? "var(--primary)" : "var(--text-sub)",
               transition: "color 0.15s",
             }}>
@@ -48,7 +49,7 @@ export default function BottomNav() {
             {active && (
               <div style={{
                 position: "absolute", bottom: 0,
-                width: 32, height: 3,
+                width: 28, height: 3,
                 background: "var(--primary)",
                 borderRadius: "3px 3px 0 0",
               }} />

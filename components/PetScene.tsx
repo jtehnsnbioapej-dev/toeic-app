@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import PetSprite, { Emotion, PetImages } from "@/components/PetSprite";
-import { DEFAULT_PET_IMAGES } from "@/lib/petImages";
+import { DEFAULT_PET_IMAGES, getPetImages } from "@/lib/petImages";
+import { getActiveUserImages, DEFAULT_USER_IMAGES } from "@/lib/characterStorage";
 import SpeakButton from "@/components/SpeakButton";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
   leftChoices?: { label: string; value: string }[];
   onLeftChoice?: (value: string) => void;
   speakText?: string;
+  speakAudioPath?: string;
   isLoading?: boolean;
   speaker?: "left" | "right";
   leftEmotion?: Emotion;
@@ -20,7 +22,7 @@ type Props = {
 type PetProfile = { name: string; emotions?: PetImages };
 
 function inferEmotion(msg: string): Emotion {
-  if (/パーフェクト|すごすぎ|全問正解|最高|めちゃくちゃ/.test(msg)) return "surprise";
+  if (/パーフェクト|すごすぎ|全問正解|最高|めちゃくちゃ/.test(msg)) return "excited";
   if (/正解|さすが|いいね|覚えた|伸びてる|連続|習得|頑張って/.test(msg)) return "happy";
   if (/惜しい|不正解|大丈夫|間違|もう一度|難しい/.test(msg)) return "sad";
   return "idle";
@@ -64,9 +66,11 @@ interface BubbleProps {
   side: "left" | "right";
   isLoading: boolean;
   speakText?: string;
+  speakAudioPath?: string;
+  top?: number;
 }
 
-function SpeechBubble({ message, side, isLoading, speakText }: BubbleProps) {
+function SpeechBubble({ message, side, isLoading, speakText, speakAudioPath, top = 80 }: BubbleProps) {
   const isRight = side === "right";
   return (
     <div
@@ -74,25 +78,25 @@ function SpeechBubble({ message, side, isLoading, speakText }: BubbleProps) {
       className="bubble-pop"
       style={{
         position: "absolute",
-        top: 14,
+        top,
         ...(isRight ? { right: 12 } : { left: 12 }),
-        maxWidth: "58%",
+        maxWidth: "28%",
         background: "#fff",
-        borderRadius: "16px 16px 16px 16px",
-        padding: "10px 14px 8px",
+        borderRadius: "14px 14px 14px 14px",
+        padding: "6px 10px 5px",
         border: "1px solid #D1D5DB",
         boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
         zIndex: 5,
       }}
     >
-      <p style={{ fontSize: 12, color: "#1A2238", fontWeight: 700, margin: 0, lineHeight: 1.6, whiteSpace: "pre-line" }}>
-        {isLoading ? "…" : message}
-      </p>
-      {!isLoading && speakText && (
-        <div style={{ marginTop: 6, display: "flex", justifyContent: "flex-end" }}>
-          <SpeakButton text={speakText} size={26} />
-        </div>
-      )}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+        <p style={{ fontSize: 11, color: "#1A2238", fontWeight: 700, margin: 0, lineHeight: 1.5, whiteSpace: "pre-line", flex: 1 }}>
+          {isLoading ? "…" : message}
+        </p>
+        {!isLoading && speakText && (
+          <SpeakButton text={speakText} audioPath={speakAudioPath} size={24} />
+        )}
+      </div>
       {/* 吹き出しのしっぽ */}
       <div style={{
         position: "absolute",
@@ -166,12 +170,16 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
   );
 }
 
-export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg }: Props) {
+export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg }: Props) {
   const [pet, setPet] = useState<PetProfile | null>(null);
+  const [petImages, setPetImages] = useState<PetImages>(DEFAULT_PET_IMAGES);
+  const [userImages, setUserImages] = useState<PetImages>(DEFAULT_USER_IMAGES);
 
   useEffect(() => {
     const saved = localStorage.getItem("petProfile");
     if (saved) setPet(JSON.parse(saved));
+    setPetImages(getPetImages());
+    setUserImages(getActiveUserImages());
   }, []);
 
   const emotion: Emotion = isLoading ? "think" : inferEmotion(message);
@@ -206,7 +214,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
 
         {/* 吹き出し */}
         {leftMessage
-          ? <SpeechBubble message={leftMessage} side="left" isLoading={false} />
+          ? <SpeechBubble message={leftMessage} side="left" isLoading={false} top={14} />
           : leftChoices?.length
             ? <ChoiceBubble choices={leftChoices} onChoice={onLeftChoice} />
             : null
@@ -216,6 +224,8 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
           side="right"
           isLoading={isLoading}
           speakText={speakText}
+          speakAudioPath={speakAudioPath}
+          top={50}
         />
 
         {/* キャラクター */}
@@ -235,15 +245,15 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
             }}
           >
             <PetSprite
-              images={{ idle: "/user-idle.png", happy: "/user-happy.png", sad: "/user-sad.png", think: "/user-think.png", surprise: "/user-surprise.png" }}
+              images={userImages}
               emotion={leftEmotion}
-              size={138}
+              size={160}
               noAnimate
             />
           </div>
 
           {/* 右：ペット（感情アニメーション） */}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", marginBottom: "-16px" }}>
             <div
               className="scene-right"
               style={{
@@ -254,7 +264,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
               }}
             >
               <PetSprite
-                images={pet?.emotions ?? DEFAULT_PET_IMAGES}
+                images={petImages}
                 emotion={emotion}
                 size={138}
               />

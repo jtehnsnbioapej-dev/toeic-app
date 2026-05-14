@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { vocabulary, Word } from "@/data/vocabulary";
 import { getWordProgress, saveWordProgress } from "@/lib/storage";
+import { EXAMPLE_INTROS, VOCAB_KNOWN_MESSAGES, VOCAB_UNKNOWN_MESSAGES } from "@/lib/petMessages";
 import PetScene from "@/components/PetScene";
 import SpeakButton from "@/components/SpeakButton";
 
@@ -15,7 +16,7 @@ export default function VocabPage() {
   const [difficulty, setDifficulty] = useState(3);
   const [petMessage, setPetMessage] = useState("この単語、一緒に覚えよう！タップして意味を確認してみて！");
   const [leftChoice, setLeftChoice] = useState<string | null>(null);
-  const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "surprise">("think");
+  const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "excited">("think");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
 
   const VOCAB_CHOICES = [
@@ -23,12 +24,6 @@ export default function VocabPage() {
     { label: "分からなかった・・・", value: "unknown" },
   ];
 
-  const EXAMPLE_INTROS = [
-    "こんなふうに使うよ！",
-    "例えばこんな文で使われるよ！",
-    "実際の文で確認してみて！",
-    "使い方の例はこれだよ！",
-  ];
 
   useEffect(() => {
     setProgress(getWordProgress() as { [id: number]: "known" | "unknown" | "unseen" });
@@ -51,8 +46,7 @@ export default function VocabPage() {
     setFlipped(false);
     setLeftChoice(null);
     setIndex((i) => Math.min(i + 1, filtered.length - 1));
-    const msgs = ["完璧！どんどん覚えてるね！", "さすが！その調子！", "覚えた！すごいじゃん！"];
-    setPetMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+    setPetMessage(VOCAB_KNOWN_MESSAGES[Math.floor(Math.random() * VOCAB_KNOWN_MESSAGES.length)]);
   };
 
   const handleUnknown = () => {
@@ -62,8 +56,7 @@ export default function VocabPage() {
     setFlipped(false);
     setLeftChoice(null);
     setIndex((i) => Math.min(i + 1, filtered.length - 1));
-    const msgs = ["大丈夫！繰り返せば絶対覚えられるよ！", "また後で一緒に復習しよう！", "難しい単語も少しずつね！"];
-    setPetMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+    setPetMessage(VOCAB_UNKNOWN_MESSAGES[Math.floor(Math.random() * VOCAB_UNKNOWN_MESSAGES.length)]);
   };
 
   const handleNav = (newIndex: number) => {
@@ -81,9 +74,7 @@ export default function VocabPage() {
     setLeftChoice(isKnown ? "覚えた！" : "分からなかった・・・");
     saveWordProgress(word.id, isKnown ? "known" : "unknown");
     setProgress((prev) => ({ ...prev, [word.id]: isKnown ? "known" : "unknown" }));
-    const msgs = isKnown
-      ? ["完璧！どんどん覚えてるね！", "さすが！その調子！", "覚えた！すごいじゃん！"]
-      : ["大丈夫！繰り返せば絶対覚えられるよ！", "また後で一緒に復習しよう！", "難しい単語も少しずつね！"];
+    const msgs = isKnown ? VOCAB_KNOWN_MESSAGES : VOCAB_UNKNOWN_MESSAGES;
     setPetMessage(msgs[Math.floor(Math.random() * msgs.length)]);
     setUserEmotion(isKnown ? "happy" : "sad");
     setPetEffect(isKnown ? "correct" : "wrong");
