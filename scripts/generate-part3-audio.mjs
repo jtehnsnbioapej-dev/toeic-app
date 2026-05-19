@@ -130,7 +130,10 @@ async function generateConversationAudio(convText) {
 }
 
 async function main() {
-  const src = readFileSync(new URL("../data/questions.ts", import.meta.url), "utf-8");
+  const src1 = readFileSync(new URL("../data/questions.ts", import.meta.url), "utf-8");
+  const extraPath = new URL("../data/questions-part3-extra.ts", import.meta.url);
+  const src2 = existsSync(extraPath) ? readFileSync(extraPath, "utf-8") : "";
+  const src = src1 + "\n" + src2;
   const conversations = extractPart3Conversations(src);
   console.log(`\nPart 3 会話 ${conversations.length} 件を処理します${FORCE ? "（--force: 全件再生成）" : ""}`);
 

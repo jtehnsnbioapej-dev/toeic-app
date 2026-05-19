@@ -6281,4 +6281,6 @@ const _part3Questions: Question[] = [
 
 ];
 
-export const questions: Question[] = [..._baseQuestions, ..._part1ExtraQuestions, ..._part2Questions, ..._part2ExtraQuestions, ..._part3Questions];
+import { _part3ExtraQuestions } from "./questions-part3-extra";
+
+export const questions: Question[] = [..._baseQuestions, ..._part1ExtraQuestions, ..._part2Questions, ..._part2ExtraQuestions, ..._part3Questions, ..._part3ExtraQuestions];
