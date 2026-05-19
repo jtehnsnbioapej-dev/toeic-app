@@ -207,7 +207,7 @@ export default function PetChatPage() {
               🗑️ データリセット
             </button>
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: "var(--text)", marginTop: 8 }}>🐾 ペット設定</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text)", marginTop: 8 }}>🐾 ペット設定</h1>
           <p style={{ fontSize: 13, color: "var(--text-sub)", marginTop: 4, fontWeight: 600 }}>
             名前を入力するだけで始められます
           </p>
@@ -221,7 +221,7 @@ export default function PetChatPage() {
         <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 14 }}>
           {/* 名前入力 */}
           <div style={{ background: "#fff", borderRadius: 20, padding: "18px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-            <p style={{ fontSize: 12, fontWeight: 800, color: "var(--text-sub)", marginBottom: 10 }}>✏️ ペットの名前</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-sub)", marginBottom: 10 }}>✏️ ペットの名前</p>
             <input
               type="text"
               value={petName}
@@ -238,7 +238,7 @@ export default function PetChatPage() {
 
           {/* 種類選択 */}
           <div style={{ background: "#fff", borderRadius: 20, padding: "18px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-            <p style={{ fontSize: 12, fontWeight: 800, color: "var(--text-sub)", marginBottom: 10 }}>🐶 ペットの種類</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-sub)", marginBottom: 10 }}>🐶 ペットの種類</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               {["犬", "猫", "うさぎ", "ハムスター", "鳥", "その他"].map((type) => (
                 <button
@@ -261,7 +261,7 @@ export default function PetChatPage() {
 
           {/* AI画像生成 */}
           <div style={{ background: "#fff", borderRadius: 20, padding: "18px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-            <p style={{ fontSize: 12, fontWeight: 800, color: "var(--text-sub)", marginBottom: 4 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-sub)", marginBottom: 4 }}>
               ✨ AI画像生成（オプション）
             </p>
             <p style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 12 }}>
@@ -294,7 +294,7 @@ export default function PetChatPage() {
                       style={{
                         background: "linear-gradient(135deg, #A78BFA, #7C3AED)",
                         color: "#fff", borderRadius: 12, padding: "10px 16px",
-                        fontWeight: 800, fontSize: 13, border: "none", cursor: "pointer",
+                        fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer",
                         boxShadow: "0 4px 12px rgba(124,58,237,0.3)", width: "100%",
                       }}
                     >
@@ -348,7 +348,7 @@ export default function PetChatPage() {
                 : "#E5E7EB",
               color: petName.trim() && !isGenerating ? "#fff" : "#9CA3AF",
               borderRadius: 18, padding: "17px 0",
-              fontWeight: 800, fontSize: 17, border: "none",
+              fontWeight: 700, fontSize: 17, border: "none",
               cursor: petName.trim() && !isGenerating ? "pointer" : "default",
               boxShadow: petName.trim() && !isGenerating ? "0 6px 20px rgba(56,178,240,0.4)" : "none",
             }}
@@ -374,7 +374,7 @@ export default function PetChatPage() {
           <img src={DEFAULT_PET_IMAGES.idle} alt={petName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>{petName}</p>
+          <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{petName}</p>
           <p style={{ fontSize: 11, color: "var(--text-sub)", fontWeight: 600 }}>{petType}</p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

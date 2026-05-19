@@ -61,7 +61,7 @@ async function generateAudio(ssml) {
       body: JSON.stringify({
         input: { ssml },
         voice: { languageCode: "en-US", name: "en-US-Neural2-F" },
-        audioConfig: { audioEncoding: "MP3", speakingRate: 0.85 },
+        audioConfig: { audioEncoding: "MP3", speakingRate: 1.0 },
       }),
     }
   );

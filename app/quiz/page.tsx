@@ -189,11 +189,11 @@ export default function QuizPage() {
             <p style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700 }}>
               目標 {DIFFICULTY_LABELS[difficulty]} · {QUIZ_COUNT}問
             </p>
-            <p style={{ fontSize: 64, fontWeight: 900, color: "var(--text)", lineHeight: 1.1, marginTop: 8 }}>
+            <p style={{ fontSize: 64, fontWeight: 700, color: "var(--text)", lineHeight: 1.1, marginTop: 8 }}>
               {correct}
               <span style={{ fontSize: 28, fontWeight: 700, color: "var(--text-sub)" }}>/{QUIZ_COUNT}</span>
             </p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: rate >= 80 ? "#059669" : rate >= 60 ? "#D97706" : "#DC2626", marginTop: 4 }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: rate >= 80 ? "#059669" : rate >= 60 ? "#D97706" : "#DC2626", marginTop: 4 }}>
               正答率 {rate}%
             </p>
 
@@ -218,7 +218,7 @@ export default function QuizPage() {
             style={{
               background: "linear-gradient(135deg, #38B2F0, #1A90D4)",
               color: "#fff", borderRadius: 18, padding: "16px 0",
-              fontWeight: 800, fontSize: 16, border: "none", cursor: "pointer",
+              fontWeight: 700, fontSize: 16, border: "none", cursor: "pointer",
               boxShadow: "0 4px 16px rgba(56,178,240,0.35)",
             }}
           >
@@ -228,7 +228,7 @@ export default function QuizPage() {
             display: "block", textAlign: "center",
             background: "#fff", border: "2px solid #E5E7EB",
             borderRadius: 18, padding: "14px 0",
-            fontWeight: 800, fontSize: 15, color: "var(--text)", textDecoration: "none",
+            fontWeight: 700, fontSize: 15, color: "var(--text)", textDecoration: "none",
           }}>
             目標スコアを変える
           </Link>
@@ -258,7 +258,7 @@ export default function QuizPage() {
           <Link href="/" style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700, textDecoration: "none" }}>← ホーム</Link>
           <div style={{
             background: "rgba(56,178,240,0.15)", borderRadius: 20, padding: "4px 12px",
-            fontSize: 12, fontWeight: 800, color: "var(--primary)",
+            fontSize: 12, fontWeight: 700, color: "var(--primary)",
           }}>
             目標 {DIFFICULTY_LABELS[difficulty]}
           </div>
@@ -331,7 +331,7 @@ export default function QuizPage() {
                     ? (idx === q.answer ? "#22C55E" : idx === selected ? "#F87171" : "#F3F4F6")
                     : "#EFF6FF",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 800,
+                  fontSize: 10, fontWeight: 700,
                   color: selected !== null
                     ? (idx === q.answer || idx === selected ? "#fff" : "#9CA3AF")
                     : "var(--primary)",
@@ -350,7 +350,7 @@ export default function QuizPage() {
               position: "absolute", bottom: 12, right: 12,
               background: "linear-gradient(135deg, #38B2F0, #1A90D4)",
               color: "#fff", borderRadius: 20, padding: "8px 16px",
-              fontWeight: 800, fontSize: 13, border: "none", cursor: "pointer",
+              fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer",
               boxShadow: "0 3px 10px rgba(56,178,240,0.45)",
               zIndex: 7,
             }}
@@ -389,7 +389,7 @@ export default function QuizPage() {
             border: `1.5px solid ${selected === q.answer ? "#86EFAC" : "#FECACA"}`,
           }}>
             <p style={{
-              fontSize: 12, fontWeight: 800, marginBottom: 6,
+              fontSize: 12, fontWeight: 700, marginBottom: 6,
               color: selected === q.answer ? "#166534" : "#9F1239",
             }}>
               {selected === q.answer ? "✓ 正解！" : `✗ 不正解　正解は「${["A", "B", "C", "D"][q.answer]}. ${q.options[q.answer]}」`}

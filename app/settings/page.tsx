@@ -70,7 +70,7 @@ export default function SettingsPage() {
         <Link href="/" style={{ fontSize: 13, color: "var(--text-sub)", fontWeight: 700, textDecoration: "none" }}>
           ← ホーム
         </Link>
-        <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--text)", marginTop: 8 }}>⚙️ キャラクター設定</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginTop: 8 }}>⚙️ キャラクター設定</h1>
         <p style={{ fontSize: 12, color: "var(--text-sub)", marginTop: 2, fontWeight: 600 }}>
           使用するキャラクターを選択できます
         </p>
@@ -83,7 +83,7 @@ export default function SettingsPage() {
             key={t}
             onClick={() => { setTab(t); cancelEdit(); }}
             style={{
-              flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 800,
+              flex: 1, padding: "11px 0", fontSize: 13, fontWeight: 700,
               border: "none", cursor: "pointer",
               background: tab === t ? "var(--primary)" : "#fff",
               color: tab === t ? "#fff" : "var(--text-sub)",
@@ -183,7 +183,7 @@ function CharacterCard({
         <div style={{
           position: "absolute", top: 8, left: 8,
           background: "var(--primary)", color: "#fff",
-          fontSize: 9, fontWeight: 800, borderRadius: 6, padding: "2px 6px",
+          fontSize: 9, fontWeight: 700, borderRadius: 6, padding: "2px 6px",
         }}>
           使用中
         </div>
@@ -199,7 +199,7 @@ function CharacterCard({
             background: "#FEE2E2", border: "none",
             color: "#EF4444", fontSize: 12, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 800,
+            fontWeight: 700,
           }}
         >
           ×
@@ -235,7 +235,7 @@ function CharacterCard({
             <button
               onClick={(e) => { e.stopPropagation(); onEditCommit(); }}
               style={{
-                flex: 1, padding: "4px 0", borderRadius: 7, fontSize: 11, fontWeight: 800,
+                flex: 1, padding: "4px 0", borderRadius: 7, fontSize: 11, fontWeight: 700,
                 background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer",
               }}
             >
@@ -255,7 +255,7 @@ function CharacterCard({
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, width: "100%", minHeight: 20 }}>
           <p style={{
-            fontSize: 12, fontWeight: 800, color: "var(--text)",
+            fontSize: 12, fontWeight: 700, color: "var(--text)",
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             lineHeight: 1.4,
           }}>
