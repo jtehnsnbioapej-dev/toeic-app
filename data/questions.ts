@@ -1,6 +1,6 @@
 export type Question = {
   id: number;
-  part: 1 | 2 | 3 | 5 | 6 | 7;
+  part: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   difficulty: 1 | 2 | 3 | 4 | 5; // 1=500点, 2=600点, 3=700点, 4=800点, 5=900点
   question: string;
   options: string[];
@@ -9,6 +9,7 @@ export type Question = {
   imagePath?: string;    // Part 1のみ使用
   translations?: string[]; // Part 1/2: 選択肢の日本語訳（options と同順）
   conversation?: string;   // Part 3: 会話トランスクリプト（3問で共有）
+  monologue?: string;      // Part 4: スピーチ・アナウンステキスト（3問で共有）
 };
 
 export const DIFFICULTY_LABELS: Record<number, string> = {
@@ -6282,5 +6283,6 @@ const _part3Questions: Question[] = [
 ];
 
 import { _part3ExtraQuestions } from "./questions-part3-extra";
+import { _part4Questions } from "./questions-part4";
 
-export const questions: Question[] = [..._baseQuestions, ..._part1ExtraQuestions, ..._part2Questions, ..._part2ExtraQuestions, ..._part3Questions, ..._part3ExtraQuestions];
+export const questions: Question[] = [..._baseQuestions, ..._part1ExtraQuestions, ..._part2Questions, ..._part2ExtraQuestions, ..._part3Questions, ..._part3ExtraQuestions, ..._part4Questions];
