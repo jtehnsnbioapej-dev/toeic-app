@@ -89,7 +89,8 @@ function sleep(ms) {
 
 async function main() {
   const srcFile = new URL("../data/questions-part4.ts", import.meta.url);
-  const src = readFileSync(srcFile, "utf-8");
+  const srcExtra = new URL("../data/questions-part4-extra.ts", import.meta.url);
+  const src = readFileSync(srcFile, "utf-8") + "\n" + readFileSync(srcExtra, "utf-8");
   const talks = extractPart4Talks(src);
 
   console.log(`Part 4 talks found: ${talks.length}`);
