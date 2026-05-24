@@ -886,15 +886,42 @@ export default function PartPracticePage() {
           </div>
           )}
 
+          {/* パッセージモード: 問題番号 + 質問文（選択肢とは独立した広幅表示） */}
+          {isPassageMode && (
+            <div style={{
+              position: "absolute",
+              top: 14,
+              left: "4%",
+              width: "92%",
+              background: "rgba(255,255,255,0.92)",
+              borderRadius: 8,
+              padding: "4px 8px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 6,
+              zIndex: 6,
+              pointerEvents: "none",
+            }}>
+              <span style={{
+                background: "#38B2F0", borderRadius: 20,
+                padding: "2px 8px", flexShrink: 0,
+                fontSize: 11, fontWeight: 700, color: "#fff",
+              }}>({p3WithinConv + 1})</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#1A2238", lineHeight: 1.45 }}>
+                {q.question}
+              </span>
+            </div>
+          )}
+
           {/* 選択肢オーバーレイ - Part 3/4/5/6/7: テキスト付き */}
           {selectedPart !== 1 && selectedPart !== 2 && (
           <div style={{
             position: "absolute",
-            top: 14,
+            top: isPassageMode ? 52 : 14,
             left: "50%",
             transform: "translateX(-50%)",
             width: "36%",
-            maxHeight: 238,
+            maxHeight: isPassageMode ? 200 : 238,
             display: "flex",
             flexDirection: "column",
             gap: 4,
@@ -903,23 +930,6 @@ export default function PartPracticePage() {
             overflowY: "auto",
             WebkitOverflowScrolling: "touch",
           }}>
-            {isPassageMode && (
-              <div style={{
-                display: "flex", alignItems: "flex-start", gap: 5, marginBottom: 4,
-                background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: "4px 6px",
-              }}>
-                <span style={{
-                  background: "#38B2F0", borderRadius: 20,
-                  padding: "2px 7px", flexShrink: 0,
-                  fontSize: 11, fontWeight: 700, color: "#fff",
-                }}>
-                  ({p3WithinConv + 1})
-                </span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "#1A2238", lineHeight: 1.4 }}>
-                  {q.question}
-                </span>
-              </div>
-            )}
             {q.options.map((opt, idx) => {
               let bg = "rgba(255,255,255,0.88)";
               let border = "1px solid rgba(229,231,235,0.7)";
