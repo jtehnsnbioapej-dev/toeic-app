@@ -169,6 +169,7 @@ export default function VocabPage() {
         leftEmotion={userEmotion}
         petEffect={petEffect}
         bg="/カフェ.png"
+        bubbleMaxWidth="44%"
       />
       </div>{/* sticky end */}
 

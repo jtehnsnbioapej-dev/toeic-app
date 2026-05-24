@@ -18,6 +18,7 @@ type Props = {
   leftEmotion?: Emotion;
   petEffect?: "correct" | "wrong" | null;
   bg?: string;
+  bubbleMaxWidth?: string;
 };
 type PetProfile = { name: string; emotions?: PetImages };
 
@@ -70,7 +71,7 @@ interface BubbleProps {
   top?: number;
 }
 
-function SpeechBubble({ message, side, isLoading, speakText, speakAudioPath, top = 80 }: BubbleProps) {
+function SpeechBubble({ message, side, isLoading, speakText, speakAudioPath, top = 80, maxWidth = "28%" }: BubbleProps & { maxWidth?: string }) {
   const isRight = side === "right";
   return (
     <div
@@ -80,7 +81,7 @@ function SpeechBubble({ message, side, isLoading, speakText, speakAudioPath, top
         position: "absolute",
         top,
         ...(isRight ? { right: 12 } : { left: 12 }),
-        maxWidth: "44%",
+        maxWidth,
         background: "#fff",
         borderRadius: "14px 14px 14px 14px",
         padding: "6px 10px 5px",
@@ -170,7 +171,7 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
   );
 }
 
-export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg }: Props) {
+export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg, bubbleMaxWidth }: Props) {
   const [pet, setPet] = useState<PetProfile | null>(null);
   const [petImages, setPetImages] = useState<PetImages>(DEFAULT_PET_IMAGES);
   const [userImages, setUserImages] = useState<PetImages>(DEFAULT_USER_IMAGES);
@@ -214,7 +215,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
 
         {/* 吹き出し */}
         {leftMessage
-          ? <SpeechBubble message={leftMessage} side="left" isLoading={false} top={14} />
+          ? <SpeechBubble message={leftMessage} side="left" isLoading={false} top={14} maxWidth={bubbleMaxWidth} />
           : leftChoices?.length
             ? <ChoiceBubble choices={leftChoices} onChoice={onLeftChoice} />
             : null
@@ -226,6 +227,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
           speakText={speakText}
           speakAudioPath={speakAudioPath}
           top={50}
+          maxWidth={bubbleMaxWidth}
         />
 
         {/* キャラクター */}
