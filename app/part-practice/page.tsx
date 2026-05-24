@@ -821,16 +821,31 @@ export default function PartPracticePage() {
         </div>
 
         <div style={{ position: "relative" }}>
-          <PetScene
-            message={petMessage}
-            leftMessage={userChoice ?? undefined}
-            speaker={speaker}
-            leftEmotion={userEmotion}
-            petEffect={petEffect}
-            bg={selectedPart === 1 ? "/自室.png" : selectedPart === 2 ? "/自室.png" : selectedPart === 3 ? "/自室.png" : selectedPart === 4 ? "/自室.png" : selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"}
-            speakText={(selectedPart === 1 || selectedPart === 2) ? q.question || `A. ${q.options[0]}` : undefined}
-            speakAudioPath={(selectedPart === 1 || selectedPart === 2) ? `/audio/part${selectedPart}/q-${q.id}.mp3` : undefined}
-          />
+          {isPassageMode ? (
+            <div style={{
+              background: "#fff",
+              borderBottom: "1.5px solid #E5E7EB",
+              padding: "12px 16px 44px",
+              height: 200,
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+            }}>
+              <p style={{ fontSize: 12, lineHeight: 1.85, color: "var(--text)", whiteSpace: "pre-line", margin: 0 }}>
+                {q.passage}
+              </p>
+            </div>
+          ) : (
+            <PetScene
+              message={petMessage}
+              leftMessage={userChoice ?? undefined}
+              speaker={speaker}
+              leftEmotion={userEmotion}
+              petEffect={petEffect}
+              bg={selectedPart === 1 ? "/自室.png" : selectedPart === 2 ? "/自室.png" : selectedPart === 3 ? "/自室.png" : selectedPart === 4 ? "/自室.png" : selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"}
+              speakText={(selectedPart === 1 || selectedPart === 2) ? q.question || `A. ${q.options[0]}` : undefined}
+              speakAudioPath={(selectedPart === 1 || selectedPart === 2) ? `/audio/part${selectedPart}/q-${q.id}.mp3` : undefined}
+            />
+          )}
 
           {/* 選択肢オーバーレイ - Part 1/2のみ: A/B/C レターボタン */}
           {(selectedPart === 1 || selectedPart === 2) && (
@@ -886,8 +901,8 @@ export default function PartPracticePage() {
           </div>
           )}
 
-          {/* 選択肢オーバーレイ - Part 3/4/5/6/7: テキスト付き */}
-          {selectedPart !== 1 && selectedPart !== 2 && (
+          {/* 選択肢オーバーレイ - Part 3/4/5: テキスト付き（パッセージモードは下のスクロール領域に移動） */}
+          {selectedPart !== 1 && selectedPart !== 2 && !isPassageMode && (
           <div style={{
             position: "absolute",
             top: 14,
@@ -1111,18 +1126,64 @@ export default function PartPracticePage() {
         );
       })()}
 
-      {/* Part 6/7: パッセージテキスト */}
-      {isPassageMode && q.passage && (
-        <div style={{ padding: "14px 20px 6px" }}>
-          <div style={{
-            background: "#fff", borderRadius: 18, padding: "16px 18px",
-            boxShadow: "0 2px 12px rgba(56,178,240,0.08)",
-            border: "1.5px solid #E5E7EB",
-            maxHeight: 260, overflowY: "auto",
-          }}>
-            <p style={{ fontSize: 13, lineHeight: 1.8, color: "var(--text)", whiteSpace: "pre-line", margin: 0 }}>
-              {q.passage}
+      {/* Part 6/7 パッセージモード: 設問番号・問題文・選択肢 */}
+      {isPassageMode && (
+        <div style={{ padding: "14px 16px 6px" }}>
+          {/* 設問番号 + 問題文 */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+            <span style={{
+              background: "#38B2F0", borderRadius: 20, padding: "2px 12px",
+              fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0, marginTop: 2,
+            }}>({p3WithinConv + 1})</span>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", margin: 0, lineHeight: 1.6 }}>
+              {q.question}
             </p>
+          </div>
+          {/* 選択肢 */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {q.options.map((opt, idx) => {
+              let bg = "#fff";
+              let border = "1px solid #E5E7EB";
+              let color = "var(--text)";
+              if (p3IsSubmitted) {
+                if (idx === q.answer) { bg = "#F0FDF4"; border = "1px solid #22C55E"; color = "#166534"; }
+                else if (idx === p3CurrentSel) { bg = "#FFF1F2"; border = "1px solid #F87171"; color = "#9F1239"; }
+                else { color = "#9CA3AF"; bg = "#F9FAFB"; }
+              } else if (idx === p3CurrentSel) {
+                bg = "#EFF6FF"; border = "1px solid #60A5FA"; color = "#1E40AF";
+              }
+              const isP3Sel = idx === p3CurrentSel;
+              const badgeBg = p3IsSubmitted
+                ? (idx === q.answer ? "#22C55E" : isP3Sel ? "#F87171" : "#F3F4F6")
+                : (isP3Sel ? "#60A5FA" : "#EFF6FF");
+              const badgeColor = p3IsSubmitted
+                ? ((idx === q.answer || isP3Sel) ? "#fff" : "#9CA3AF")
+                : (isP3Sel ? "#fff" : "var(--primary)");
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSelect(idx)}
+                  disabled={p3IsSubmitted}
+                  style={{
+                    background: bg, border, borderRadius: 12,
+                    padding: "10px 12px", cursor: p3IsSubmitted ? "default" : "pointer",
+                    display: "flex", alignItems: "center", gap: 8,
+                    textAlign: "left", width: "100%",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <span style={{
+                    width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                    background: badgeBg,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 11, fontWeight: 700, color: badgeColor,
+                  }}>
+                    {["A", "B", "C", "D"][idx]}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color, lineHeight: 1.4 }}>{opt}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
