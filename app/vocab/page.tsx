@@ -8,22 +8,31 @@ import { EXAMPLE_INTROS, VOCAB_KNOWN_MESSAGES, VOCAB_UNKNOWN_MESSAGES } from "@/
 import PetScene from "@/components/PetScene";
 import SpeakButton from "@/components/SpeakButton";
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export default function VocabPage() {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [progress, setProgress] = useState<{ [id: number]: "known" | "unknown" | "unseen" }>({});
   const [filter, setFilter] = useState<"all" | "unknown">("all");
   const [difficulty, setDifficulty] = useState(3);
+  const [shuffledWords, setShuffledWords] = useState<Word[]>(() => shuffleArray(vocabulary.filter(w => w.difficulty === 3)));
   const [petMessage, setPetMessage] = useState("この単語、一緒に覚えよう！タップして意味を確認してみて！");
   const [leftChoice, setLeftChoice] = useState<string | null>(null);
   const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "excited">("think");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
 
   const VOCAB_CHOICES = [
-    { label: "覚えた！", value: "known" },
-    { label: "分からなかった・・・", value: "unknown" },
+    { label: "完璧！", value: "known" },
+    { label: "後で復習", value: "unknown" },
   ];
-
 
   useEffect(() => {
     setProgress(getWordProgress() as { [id: number]: "known" | "unknown" | "unseen" });
@@ -31,7 +40,12 @@ export default function VocabPage() {
     if (saved) setDifficulty(Number(saved));
   }, []);
 
-  const difficultyWords = vocabulary.filter((w) => w.difficulty === difficulty);
+  useEffect(() => {
+    setShuffledWords(shuffleArray(vocabulary.filter(w => w.difficulty === difficulty)));
+    setIndex(0);
+  }, [difficulty]);
+
+  const difficultyWords = shuffledWords;
 
   const filtered = filter === "unknown"
     ? difficultyWords.filter((w) => progress[w.id] !== "known")
@@ -71,7 +85,7 @@ export default function VocabPage() {
   const handleLeftChoice = (value: string) => {
     if (!word) return;
     const isKnown = value === "known";
-    setLeftChoice(isKnown ? "覚えた！" : "分からなかった・・・");
+    setLeftChoice(isKnown ? "完璧！" : "後で復習");
     saveWordProgress(word.id, isKnown ? "known" : "unknown");
     setProgress((prev) => ({ ...prev, [word.id]: isKnown ? "known" : "unknown" }));
     const msgs = isKnown ? VOCAB_KNOWN_MESSAGES : VOCAB_UNKNOWN_MESSAGES;
