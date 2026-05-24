@@ -893,7 +893,7 @@ export default function PartPracticePage() {
             top: 14,
             left: "50%",
             transform: "translateX(-50%)",
-            width: isPassageMode ? "92%" : "36%",
+            width: "36%",
             maxHeight: 238,
             display: "flex",
             flexDirection: "column",
@@ -904,24 +904,21 @@ export default function PartPracticePage() {
             WebkitOverflowScrolling: "touch",
           }}>
             {isPassageMode && (
-              <>
-                <div style={{
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 5, marginBottom: 4,
+                background: "rgba(255,255,255,0.92)", borderRadius: 8, padding: "4px 6px",
+              }}>
+                <span style={{
                   background: "#38B2F0", borderRadius: 20,
-                  padding: "4px 12px", marginBottom: 2,
-                  fontSize: 12, fontWeight: 700, color: "#fff",
-                  textAlign: "center", alignSelf: "flex-start",
+                  padding: "2px 7px", flexShrink: 0,
+                  fontSize: 11, fontWeight: 700, color: "#fff",
                 }}>
                   ({p3WithinConv + 1})
-                </div>
-                <p style={{
-                  fontSize: 12, fontWeight: 600, color: "#1A2238",
-                  lineHeight: 1.5, margin: "0 0 4px",
-                  background: "rgba(255,255,255,0.92)",
-                  borderRadius: 8, padding: "4px 8px",
-                }}>
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#1A2238", lineHeight: 1.4 }}>
                   {q.question}
-                </p>
-              </>
+                </span>
+              </div>
             )}
             {q.options.map((opt, idx) => {
               let bg = "rgba(255,255,255,0.88)";
