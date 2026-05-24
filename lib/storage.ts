@@ -92,6 +92,26 @@ function updateStreak() {
   localStorage.setItem(LAST_STUDY_KEY, today);
 }
 
+const WRONG_KEY_PREFIX = "toeic_wrong_p";
+
+export function getWrongIds(part: number): number[] {
+  if (typeof window === "undefined") return [];
+  const raw = localStorage.getItem(WRONG_KEY_PREFIX + part);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export function addWrongId(part: number, id: number): void {
+  const ids = new Set(getWrongIds(part));
+  ids.add(id);
+  localStorage.setItem(WRONG_KEY_PREFIX + part, JSON.stringify([...ids]));
+}
+
+export function removeWrongId(part: number, id: number): void {
+  const ids = new Set(getWrongIds(part));
+  ids.delete(id);
+  localStorage.setItem(WRONG_KEY_PREFIX + part, JSON.stringify([...ids]));
+}
+
 export function getWeakParts(): { part: string; rate: number }[] {
   const all = getProgress();
   const totals: { [key: string]: { correct: number; total: number } } = {};
