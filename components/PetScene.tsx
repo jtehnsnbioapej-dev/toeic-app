@@ -136,7 +136,7 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
         boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
         zIndex: 5,
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
         gap: 5,
       }}
     >
