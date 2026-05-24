@@ -155,7 +155,7 @@ function buildSessions(part: 1 | 2 | 3 | 4 | 5 | 6 | 7, difficulty: number): Que
 function buildReviewQuestions(part: 1 | 2 | 3 | 4 | 5 | 6 | 7): Question[] {
   const wrongIds = new Set(getWrongIds(part));
   if (wrongIds.size === 0) return [];
-  const partQs = questions.filter(q => q.part === part && !isJapanese(q.question) && !q.options.some(isJapanese));
+  const partQs = questions.filter(q => q.part === part && (q.passageId !== undefined || (!isJapanese(q.question) && !q.options.some(isJapanese))));
   if (part === 3 || part === 4) {
     const offset = part === 3 ? 3000 : 4000;
     const wrongConvNums = new Set<number>();
@@ -520,7 +520,7 @@ export default function PartPracticePage() {
             {([1, 2, 3, 4, 5, 6, 7] as const).map((part) => {
               const info = PART_INFO[part];
               const totalQ = questions.filter(
-                (q) => q.part === part && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
+                (q) => q.part === part && q.difficulty === difficulty && (q.passageId !== undefined || (!isJapanese(q.question) && !q.options.some(isJapanese)))
               ).length;
               return (
                 <button
