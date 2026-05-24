@@ -893,24 +893,35 @@ export default function PartPracticePage() {
             top: 14,
             left: "50%",
             transform: "translateX(-50%)",
-            width: "36%",
+            width: isPassageMode ? "92%" : "36%",
             maxHeight: 238,
             display: "flex",
             flexDirection: "column",
             gap: 4,
             zIndex: 6,
-            pointerEvents: "none",
+            pointerEvents: "auto",
             overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
           }}>
             {isPassageMode && (
-              <div style={{
-                background: "#38B2F0", borderRadius: 20,
-                padding: "4px 12px", marginBottom: 4,
-                fontSize: 12, fontWeight: 700, color: "#fff",
-                textAlign: "center",
-              }}>
-                ({p3WithinConv + 1})
-              </div>
+              <>
+                <div style={{
+                  background: "#38B2F0", borderRadius: 20,
+                  padding: "4px 12px", marginBottom: 2,
+                  fontSize: 12, fontWeight: 700, color: "#fff",
+                  textAlign: "center", alignSelf: "flex-start",
+                }}>
+                  ({p3WithinConv + 1})
+                </div>
+                <p style={{
+                  fontSize: 12, fontWeight: 600, color: "#1A2238",
+                  lineHeight: 1.5, margin: "0 0 4px",
+                  background: "rgba(255,255,255,0.92)",
+                  borderRadius: 8, padding: "4px 8px",
+                }}>
+                  {q.question}
+                </p>
+              </>
             )}
             {q.options.map((opt, idx) => {
               let bg = "rgba(255,255,255,0.88)";
