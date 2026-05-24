@@ -48,7 +48,7 @@ export default function VocabPage() {
   const difficultyWords = shuffledWords;
 
   const filtered = filter === "unknown"
-    ? difficultyWords.filter((w) => progress[w.id] !== "known")
+    ? difficultyWords.filter((w) => progress[w.id] === "unknown")
     : difficultyWords;
 
   const word: Word | undefined = filtered[index];

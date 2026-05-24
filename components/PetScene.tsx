@@ -80,7 +80,7 @@ function SpeechBubble({ message, side, isLoading, speakText, speakAudioPath, top
         position: "absolute",
         top,
         ...(isRight ? { right: 12 } : { left: 12 }),
-        maxWidth: "28%",
+        maxWidth: "44%",
         background: "#fff",
         borderRadius: "14px 14px 14px 14px",
         padding: "6px 10px 5px",
