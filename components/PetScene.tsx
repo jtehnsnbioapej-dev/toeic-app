@@ -19,6 +19,7 @@ type Props = {
   petEffect?: "correct" | "wrong" | null;
   bg?: string;
   bubbleMaxWidth?: string;
+  leftBubbleTop?: number;
 };
 type PetProfile = { name: string; emotions?: PetImages };
 
@@ -171,7 +172,7 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
   );
 }
 
-export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg, bubbleMaxWidth }: Props) {
+export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg, bubbleMaxWidth, leftBubbleTop = 14 }: Props) {
   const [pet, setPet] = useState<PetProfile | null>(null);
   const [petImages, setPetImages] = useState<PetImages>(DEFAULT_PET_IMAGES);
   const [userImages, setUserImages] = useState<PetImages>(DEFAULT_USER_IMAGES);
@@ -215,7 +216,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
 
         {/* 吹き出し */}
         {leftMessage
-          ? <SpeechBubble message={leftMessage} side="left" isLoading={false} top={14} maxWidth={bubbleMaxWidth} />
+          ? <SpeechBubble message={leftMessage} side="left" isLoading={false} top={leftBubbleTop} maxWidth={bubbleMaxWidth} />
           : leftChoices?.length
             ? <ChoiceBubble choices={leftChoices} onChoice={onLeftChoice} />
             : null

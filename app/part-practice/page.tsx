@@ -830,6 +830,7 @@ export default function PartPracticePage() {
             bg={selectedPart === 1 ? "/自室.png" : selectedPart === 2 ? "/自室.png" : selectedPart === 3 ? "/自室.png" : selectedPart === 4 ? "/自室.png" : selectedPart === 5 ? "/オフィス.png" : selectedPart === 6 ? "/自習室.png" : "/試験会場.png"}
             speakText={(selectedPart === 1 || selectedPart === 2) ? q.question || `A. ${q.options[0]}` : undefined}
             speakAudioPath={(selectedPart === 1 || selectedPart === 2) ? `/audio/part${selectedPart}/q-${q.id}.mp3` : undefined}
+            leftBubbleTop={selectedPart === 7 ? 130 : 14}
           />
 
           {/* 選択肢オーバーレイ - Part 1/2のみ: A/B/C レターボタン */}
