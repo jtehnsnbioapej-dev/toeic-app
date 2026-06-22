@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PetSprite, { Emotion, PetImages } from "@/components/PetSprite";
 import { DEFAULT_PET_IMAGES, getPetImages } from "@/lib/petImages";
-import { getActiveUserImages, DEFAULT_USER_IMAGES } from "@/lib/characterStorage";
+import { getActiveUserImages, DEFAULT_USER_IMAGES, getStocks } from "@/lib/characterStorage";
 import SpeakButton from "@/components/SpeakButton";
 
 type Props = {
@@ -20,12 +20,13 @@ type Props = {
   bg?: string;
   bubbleMaxWidth?: string;
   leftBubbleTop?: number;
+  forceTrigger?: number;
 };
 type PetProfile = { name: string; emotions?: PetImages };
 
 function inferEmotion(msg: string): Emotion {
   if (/パーフェクト|すごすぎ|全問正解|最高|めちゃくちゃ/.test(msg)) return "excited";
-  if (/正解|さすが|いいね|覚えた|伸びてる|連続|習得|頑張って/.test(msg)) return "happy";
+  if (/正解|さすが|いいね|覚え|伸びてる|連続|習得|頑張って|完璧|すごい|素晴らしい|やった|ナイス|お見事/.test(msg)) return "happy";
   if (/惜しい|不正解|大丈夫|間違|もう一度|難しい/.test(msg)) return "sad";
   return "idle";
 }
@@ -172,19 +173,61 @@ function ChoiceBubble({ choices, onChoice }: { choices: { label: string; value: 
   );
 }
 
-export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg, bubbleMaxWidth, leftBubbleTop = 14 }: Props) {
+export default function PetScene({ message, leftMessage, leftChoices, onLeftChoice, speakText, speakAudioPath, isLoading = false, speaker, leftEmotion = "idle", petEffect, bg, bubbleMaxWidth, leftBubbleTop = 14, forceTrigger }: Props) {
   const [pet, setPet] = useState<PetProfile | null>(null);
-  const [petImages, setPetImages] = useState<PetImages>(DEFAULT_PET_IMAGES);
-  const [userImages, setUserImages] = useState<PetImages>(DEFAULT_USER_IMAGES);
+  const [petTriggerKey, setPetTriggerKey] = useState(0);
+  const prevMessage = useRef(message);
+  // 生成キャラがactiveな場合はIndexedDB読み込み完了まで空で待つ（デフォルトキャラ誤表示を防ぐ）
+  const initialPetImages = (): PetImages => {
+    if (typeof window === "undefined") return DEFAULT_PET_IMAGES;
+    const stocks = getStocks();
+    const activePet = stocks.pets.find((p) => p.id === stocks.activePetId);
+    if (activePet?.hasStoredImages) return {};
+    return DEFAULT_PET_IMAGES;
+  };
+  const [petImages, setPetImages] = useState<PetImages>(initialPetImages);
+  const initialUserImages = (): PetImages => {
+    if (typeof window === "undefined") return DEFAULT_USER_IMAGES;
+    const stocks = getStocks();
+    const active = stocks.users.find((u) => u.id === stocks.activeUserId);
+    if (active?.hasStoredImages) return {};
+    return DEFAULT_USER_IMAGES;
+  };
+  const [userImages, setUserImages] = useState<PetImages>(initialUserImages);
+  const [userFlipped, setUserFlipped] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("petProfile");
     if (saved) setPet(JSON.parse(saved));
-    setPetImages(getPetImages());
-    setUserImages(getActiveUserImages());
+    import("@/lib/imageDB").then(({ hydrateActiveImages }) => {
+      const stocks = getStocks();
+      return hydrateActiveImages([stocks.activePetId, stocks.activeUserId]);
+    }).then(() => {
+      setPetImages(getPetImages());
+      setUserImages(getActiveUserImages());
+      const stocks = getStocks();
+      const activeUser = stocks.users.find((u) => u.id === stocks.activeUserId);
+      setUserFlipped(activeUser?.flipped ?? false);
+    });
   }, []);
 
-  const emotion: Emotion = isLoading ? "think" : inferEmotion(message);
+  const emotion: Emotion = isLoading ? "think"
+    : petEffect === "wrong" ? "sad"
+    : petEffect === "correct" ? (inferEmotion(message) === "excited" ? "excited" : "happy")
+    : inferEmotion(message);
+
+  // message が変わるたびにペットアニメーションを強制再生
+  useEffect(() => {
+    if (message !== prevMessage.current) {
+      prevMessage.current = message;
+      if (inferEmotion(message) !== "idle") setPetTriggerKey(k => k + 1);
+    }
+  }, [message]);
+
+  // 外部から答えイベントを受け取ってアニメーションを確実にトリガー
+  useEffect(() => {
+    if (forceTrigger !== undefined && forceTrigger > 0) setPetTriggerKey(k => k + 1);
+  }, [forceTrigger]);
 
   return (
     <div style={{ overflow: "hidden" }}>
@@ -252,6 +295,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
               emotion={leftEmotion}
               size={160}
               noAnimate
+              flipped={userFlipped}
             />
           </div>
 
@@ -269,6 +313,7 @@ export default function PetScene({ message, leftMessage, leftChoices, onLeftChoi
               <PetSprite
                 images={petImages}
                 emotion={emotion}
+                triggerKey={petTriggerKey}
                 size={138}
               />
             </div>

@@ -1,0 +1,69 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6CC8FF"/>
+      <stop offset="0.55" stop-color="#38B2F0"/>
+      <stop offset="1" stop-color="#1486CE"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.46" r="0.6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EAF4FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- 光のグロー（Hikari） -->
+  <circle cx="512" cy="470" r="430" fill="url(#glow)"/>
+
+  <!-- 顔の影 -->
+  <ellipse cx="512" cy="588" rx="306" ry="296" fill="#0B5E94" opacity="0.18"/>
+
+  <!-- 耳（白）：頭の後ろに来るよう先に描画 -->
+  <path d="M338 392 L372 196 Q392 168 430 202 L512 352 Z" fill="url(#face)" stroke-linejoin="round"/>
+  <path d="M686 392 L652 196 Q632 168 594 202 L512 352 Z" fill="url(#face)" stroke-linejoin="round"/>
+  <!-- 耳の中（ピンク） -->
+  <path d="M392 360 L408 246 Q418 232 436 252 L478 338 Z" fill="#FFC2D4"/>
+  <path d="M632 360 L616 246 Q606 232 588 252 L546 338 Z" fill="#FFC2D4"/>
+
+  <!-- 顔 -->
+  <ellipse cx="512" cy="568" rx="300" ry="288" fill="url(#face)"/>
+
+  <!-- ほっぺ -->
+  <ellipse cx="372" cy="648" rx="58" ry="36" fill="#FFB0C6" opacity="0.65"/>
+  <ellipse cx="652" cy="648" rx="58" ry="36" fill="#FFB0C6" opacity="0.65"/>
+
+  <!-- 目 -->
+  <ellipse cx="424" cy="556" rx="36" ry="48" fill="#28344F"/>
+  <ellipse cx="600" cy="556" rx="36" ry="48" fill="#28344F"/>
+  <circle cx="412" cy="538" r="13" fill="#FFFFFF"/>
+  <circle cx="588" cy="538" r="13" fill="#FFFFFF"/>
+  <circle cx="436" cy="572" r="6" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="612" cy="572" r="6" fill="#FFFFFF" opacity="0.85"/>
+
+  <!-- 鼻 -->
+  <ellipse cx="512" cy="612" rx="20" ry="14" fill="#FF7E9B"/>
+
+  <!-- 口（にっこり ω） -->
+  <path d="M512 626 Q486 668 460 638" fill="none" stroke="#28344F" stroke-width="11" stroke-linecap="round"/>
+  <path d="M512 626 Q538 668 564 638" fill="none" stroke="#28344F" stroke-width="11" stroke-linecap="round"/>
+
+  <!-- ひげ -->
+  <g stroke="#9CB3CC" stroke-width="8" stroke-linecap="round" opacity="0.7">
+    <line x1="300" y1="600" x2="222" y2="586"/>
+    <line x1="300" y1="624" x2="218" y2="630"/>
+    <line x1="724" y1="600" x2="802" y2="586"/>
+    <line x1="724" y1="624" x2="806" y2="630"/>
+  </g>
+
+  <!-- きらめき（金）：お祝い演出と"光"のモチーフ -->
+  <g fill="#FFD64A">
+    <path d="M772 286 L788 340 L842 356 L788 372 L772 426 L756 372 L702 356 L756 340 Z"/>
+    <path d="M250 300 L259 330 L289 339 L259 348 L250 378 L241 348 L211 339 L241 330 Z" opacity="0.92"/>
+  </g>
+</svg>

@@ -11,6 +11,8 @@
   --text: #1A2238;
   --text-sub: #7B8FA6;
   --nav-h: 68px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body {
@@ -20,5 +22,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ボトムナビ分の余白 */
-.page-wrap { padding-bottom: calc(var(--nav-h) + 16px); }
+/* Safe Area対応 */
+body { padding-top: var(--safe-top); }
+
+/* ボトムナビ分の余白（ホームインジケーター考慮） */
+.page-wrap { padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); }

@@ -146,7 +146,7 @@ export default function PracticePage() {
                 onClick={() => {
                   if (selected !== null) return;
                   setSelected(idx);
-                  saveTodayProgress(idx === q.answer ? 1 : 0, 1, q.part);
+                  saveTodayProgress(idx === q.answer ? 1 : 0, 1, q.part, q.difficulty);
                 }}
                 className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 font-medium transition-all ${style}`}
               >

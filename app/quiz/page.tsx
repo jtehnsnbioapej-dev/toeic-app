@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_BASE } from "@/lib/apiBase";
 import Link from "next/link";
+import { checkPremium, purchasePremium, restorePurchases } from "@/lib/purchases";
 import { questions, Question, DIFFICULTY_LABELS } from "@/data/questions";
 import translationsMap from "@/data/question-translations.json";
 import { saveTodayProgress } from "@/lib/storage";
+import { playSfx } from "@/lib/audioManager";
 import { CORRECT_MESSAGES, WRONG_MESSAGES, QUESTION_MESSAGES, EXCITED_MESSAGES } from "@/lib/petMessages";
 import PetScene from "@/components/PetScene";
 import SpeakButton from "@/components/SpeakButton";
@@ -41,6 +44,13 @@ export default function QuizPage() {
   const [userEmotion, setUserEmotion] = useState<"idle" | "happy" | "sad" | "think" | "excited">("think");
   const [petEffect, setPetEffect] = useState<"correct" | "wrong" | null>(null);
   const [translation, setTranslation] = useState<string>("");
+  const [isPremiumUser, setIsPremiumUser] = useState<boolean | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [purchaseMsg, setPurchaseMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkPremium().then(setIsPremiumUser);
+  }, []);
 
   // グローバル難易度設定をlocalStorageから読み込む
   useEffect(() => {
@@ -72,17 +82,19 @@ export default function QuizPage() {
     const correct = idx === q.answer;
     const newResults = [...results, correct];
     setResults(newResults);
-    saveTodayProgress(correct ? 1 : 0, 1, q.part);
+    saveTodayProgress(correct ? 1 : 0, 1, q.part, q.difficulty);
 
-    // 3問連続正解チェック（今回含む直近3問）
+    // 3問連続正解チェック（ストリーク開始時のみ excited）
     const streak3 = correct && newResults.length >= 3 && newResults.slice(-3).every(Boolean);
+    const isNewStreak = streak3 && (newResults.length < 4 || !newResults[newResults.length - 4]);
 
-    const reaction = streak3
+    const reaction = isNewStreak
       ? EXCITED_MESSAGES[Math.floor(Math.random() * EXCITED_MESSAGES.length)]
       : correct
         ? CORRECT_MESSAGES[Math.floor(Math.random() * CORRECT_MESSAGES.length)]
         : WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
 
+    playSfx(correct ? "/audio/se/correct.mp3" : "/audio/se/wrong.mp3");
     // 左キャラが選んだ答えを言う → ペットが反応
     const choiceLabel = ["A", "B", "C", "D"][idx];
     setUserChoice(`${choiceLabel}！`);
@@ -97,7 +109,7 @@ export default function QuizPage() {
     if (cachedJa) {
       setTranslation(cachedJa);
     } else {
-      fetch("/api/translate", {
+      fetch(`${API_BASE}/api/translate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: q.question.replace(/_+/, q.options[q.answer]) }),
@@ -109,7 +121,7 @@ export default function QuizPage() {
 
     setPetEffect(correct ? "correct" : "wrong");
     setTimeout(() => {
-      setUserEmotion(streak3 ? "excited" : correct ? "happy" : "sad");
+      setUserEmotion(isNewStreak ? "excited" : correct ? "happy" : "sad");
     }, 100);
   };
 
@@ -126,7 +138,7 @@ export default function QuizPage() {
       setUserChoice(null);
       setUserEmotion("think");
       setPetMessage(QUESTION_MESSAGES[Math.floor(Math.random() * QUESTION_MESSAGES.length)]);
-      window.scrollTo(0, 0);
+      setTimeout(() => window.scrollTo(0, 0), 0);
     }
   };
 
@@ -145,8 +157,107 @@ export default function QuizPage() {
     setPetEffect(null);
     setTranslation("");
     setPetMessage(QUESTION_MESSAGES[0]);
-    window.scrollTo(0, 0);
+    setTimeout(() => window.scrollTo(0, 0), 0);
   };
+
+  if (isPremiumUser === null) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <p style={{ color: "var(--text-sub)" }}>読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (!isPremiumUser) {
+    return (
+      <div style={{
+        position: "fixed", inset: 0, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        background: "var(--bg)", padding: "32px 24px",
+        paddingTop: "calc(env(safe-area-inset-top) + 32px)",
+      }}>
+        <p style={{ fontSize: 48, marginBottom: 16 }}>🔒</p>
+        <p style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginBottom: 8, textAlign: "center" }}>クイズはプレミアム限定</p>
+        <p style={{ fontSize: 14, color: "var(--text-sub)", textAlign: "center", marginBottom: 32, lineHeight: 1.7 }}>
+          全パート・全難易度の問題と<br />ランダムクイズが解放されます
+        </p>
+        <div style={{
+          width: "100%", maxWidth: 360,
+          background: "#fff", borderRadius: 20, padding: "20px",
+          boxShadow: "0 4px 20px rgba(56,178,240,0.12)", marginBottom: 24,
+        }}>
+          {[
+            { text: "Part 1〜7 すべてのパート", highlight: false },
+            { text: "D1〜D5 全難易度（5段階）", highlight: false },
+            { text: "ランダムクイズ解放", highlight: false },
+            { text: "キャラ生成チケット1枚プレゼント🎁", highlight: true },
+          ].map(({ text, highlight }) => (
+            <div key={text} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: 10,
+              ...(highlight ? {
+                background: "linear-gradient(135deg, #FFF9C4, #FFF3B0)",
+                borderRadius: 10, padding: "8px 12px",
+                border: "1px solid #F59E0B",
+              } : { padding: "4px 0" }),
+            }}>
+              <span style={{ color: highlight ? "#F59E0B" : "#22C55E", fontWeight: 700, fontSize: 16 }}>✓</span>
+              <p style={{ fontSize: 14, color: "var(--text)", fontWeight: highlight ? 700 : 600 }}>{text}</p>
+            </div>
+          ))}
+        </div>
+        {purchaseMsg && (
+          <p style={{ fontSize: 13, color: "#DC2626", marginBottom: 12, textAlign: "center" }}>{purchaseMsg}</p>
+        )}
+        <button
+          onClick={async () => {
+            setIsPurchasing(true);
+            setPurchaseMsg(null);
+            const { success, cancelled } = await purchasePremium();
+            setIsPurchasing(false);
+            if (success) {
+              setIsPremiumUser(true);
+            } else if (!cancelled) {
+              setPurchaseMsg("購入に失敗しました。もう一度お試しください。");
+            }
+          }}
+          disabled={isPurchasing}
+          style={{
+            width: "100%", maxWidth: 360,
+            background: "linear-gradient(135deg, #38B2F0, #1A90D4)",
+            color: "#fff", borderRadius: 16, padding: "16px 0",
+            fontWeight: 700, fontSize: 16, border: "none", cursor: isPurchasing ? "default" : "pointer",
+            boxShadow: "0 4px 16px rgba(56,178,240,0.35)",
+            opacity: isPurchasing ? 0.6 : 1, marginBottom: 10,
+          }}
+        >
+          {isPurchasing ? "処理中..." : "全問題を解放する — ¥980"}
+        </button>
+        <button
+          onClick={async () => {
+            setIsPurchasing(true);
+            setPurchaseMsg(null);
+            const ok = await restorePurchases();
+            setIsPurchasing(false);
+            if (ok) {
+              setIsPremiumUser(true);
+            } else {
+              setPurchaseMsg("購入履歴が見つかりませんでした。");
+            }
+          }}
+          disabled={isPurchasing}
+          style={{
+            width: "100%", maxWidth: 360,
+            background: "transparent", color: "var(--text-sub)",
+            borderRadius: 16, padding: "12px 0",
+            fontWeight: 600, fontSize: 14, border: "none", cursor: isPurchasing ? "default" : "pointer",
+          }}
+        >
+          購入を復元する
+        </button>
+      </div>
+    );
+  }
 
   if (quizQuestions.length === 0) {
     return (

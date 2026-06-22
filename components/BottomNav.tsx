@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: "/part-practice", icon: "📚", label: "パート" },
   { href: "/vocab",         icon: "📝", label: "単語"   },
   { href: "/progress",      icon: "📊", label: "進捗"   },
-  { href: "/settings",      icon: "⚙️", label: "設定"   },
+  { href: "/settings",      icon: "🌟", label: "キャラ" },
 ];
 
 export default function BottomNav() {
@@ -19,7 +19,7 @@ export default function BottomNav() {
     <nav style={{
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
       width: "100%", maxWidth: 448,
-      height: "var(--nav-h)",
+      height: "calc(var(--nav-h) + var(--safe-bottom))",
       background: "rgba(255,255,255,0.92)",
       backdropFilter: "blur(16px)",
       borderTop: "1px solid rgba(56,178,240,0.12)",

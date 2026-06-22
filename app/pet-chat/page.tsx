@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import PetSprite from "@/components/PetSprite";
+import { API_BASE } from "@/lib/apiBase";
 import { DEFAULT_PET_IMAGES } from "@/lib/petImages";
 import { Emotion, PetImages } from "@/components/PetSprite";
 
@@ -104,9 +105,9 @@ export default function PetChatPage() {
     // ベースキャラクター1枚を生成。感情表現はCSSアニメーションで対応
     let baseImage: string | undefined;
     try {
-      const res = await fetch("/api/generate-pet-images", {
+      const res = await fetch(`${API_BASE}/api/generate-pet-images`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-api-secret": process.env.NEXT_PUBLIC_API_SECRET ?? "" },
         body: JSON.stringify({
           imageBase64: smallBase64,
           mediaType: smallMediaType,
@@ -153,7 +154,7 @@ export default function PetChatPage() {
     setInput("");
     setIsLoading(true);
     try {
-      const res = await fetch("/api/pet-chat", {
+      const res = await fetch(`${API_BASE}/api/pet-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, petName, petType }),

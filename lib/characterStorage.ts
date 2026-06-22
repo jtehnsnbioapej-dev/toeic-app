@@ -1,14 +1,17 @@
 import { PetImages, Emotion } from "@/components/PetSprite";
+import { getCachedImage } from "./imageDB";
 
 export type CharacterRole = "pet" | "user";
 
 export type CharacterStock = {
   id: string;
   name: string;
-  type?: string; // ペットのみ（猫・犬など）
+  type?: string;
   role: CharacterRole;
-  images: Partial<PetImages>;
+  images: Partial<PetImages>; // デフォルトキャラのみ使用。生成キャラはIndexedDBに保存
   isDefault: boolean;
+  hasStoredImages?: boolean;  // trueのとき images はIndexedDBを参照
+  flipped?: boolean;          // 表示時に水平反転する
   createdAt: string;
 };
 
@@ -100,6 +103,10 @@ function makeDefaultStocks(): CharacterStocks {
   };
 }
 
+export function getDefaultStocks(): CharacterStocks {
+  return makeDefaultStocks();
+}
+
 export function getStocks(): CharacterStocks {
   if (typeof window === "undefined") return makeDefaultStocks();
 
@@ -161,19 +168,28 @@ export function getStocks(): CharacterStocks {
 }
 
 export function saveStocks(stocks: CharacterStocks): void {
-  localStorage.setItem(STOCKS_KEY, JSON.stringify(stocks));
+  try {
+    localStorage.setItem(STOCKS_KEY, JSON.stringify(stocks));
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      throw new Error("ストレージ容量が不足しています。既存の生成キャラを × で削除してから再試行してください。");
+    }
+    throw e;
+  }
 }
 
 export function getActivePetImages(): PetImages {
   const stocks = getStocks();
   const active = stocks.pets.find((p) => p.id === stocks.activePetId);
-  return (active?.images as PetImages) ?? DEFAULT_PET_STOCK.images as PetImages;
+  if (!active) return DEFAULT_PET_STOCK.images as PetImages;
+  return resolveImages(active.images, active.hasStoredImages ? active.id : undefined);
 }
 
 export function getActiveUserImages(): PetImages {
   const stocks = getStocks();
   const active = stocks.users.find((u) => u.id === stocks.activeUserId);
-  return (active?.images as PetImages) ?? DEFAULT_USER_IMAGES;
+  if (!active) return DEFAULT_USER_IMAGES;
+  return resolveImages(active.images, active.hasStoredImages ? active.id : undefined);
 }
 
 export function setActivePet(id: string): void {
@@ -188,6 +204,29 @@ export function setActiveUser(id: string): void {
   if (!stocks.users.find((u) => u.id === id)) return;
   stocks.activeUserId = id;
   saveStocks(stocks);
+}
+
+// 生成キャラの追加（images は IndexedDB に保存済み前提。localStorageには画像を入れない）
+export function addStockWithStoredImages(
+  stock: Omit<CharacterStock, "id" | "createdAt" | "images">
+): CharacterStock {
+  const stocks = getStocks();
+  const newStock: CharacterStock = {
+    ...stock,
+    images: {},            // localStorageには画像を保存しない
+    hasStoredImages: true, // IndexedDBに画像あり
+    id: `${stock.role}-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+  };
+  if (stock.role === "pet") {
+    stocks.pets.push(newStock);
+    stocks.activePetId = newStock.id;
+  } else {
+    stocks.users.push(newStock);
+    stocks.activeUserId = newStock.id;
+  }
+  saveStocks(stocks);
+  return newStock;
 }
 
 export function addStock(stock: Omit<CharacterStock, "id" | "createdAt">): CharacterStock {
@@ -221,18 +260,32 @@ export function removeStock(id: string): void {
     if (stocks.activeUserId === id) stocks.activeUserId = "default-user2";
   }
   saveStocks(stocks);
+  // IndexedDB の画像は imageDB.deleteCharacterImages(id) で別途削除
 }
 
 export { DEFAULT_USER_IMAGES };
 
-// 全感情を補完: idleキーのみのストックに対して全感情でidleをフォールバック
-export function resolveImages(images: Partial<PetImages>): PetImages {
+// 全感情を補完。hasStoredImages=true の場合はIndexedDBキャッシュから取得
+export function resolveImages(images: Partial<PetImages>, stockId?: string): PetImages {
   const emotions: Emotion[] = ["idle", "happy", "sad", "think", "excited"];
   const result: PetImages = {};
   for (const e of emotions) {
-    result[e] = images[e] ?? images.idle;
+    if (stockId) {
+      result[e] = getCachedImage(stockId, e) ?? images[e] ?? images.idle;
+    } else {
+      result[e] = images[e] ?? images.idle;
+    }
   }
   return result;
+}
+
+export function toggleFlip(id: string): void {
+  const stocks = getStocks();
+  const stock = [...stocks.pets, ...stocks.users].find((s) => s.id === id);
+  if (stock) {
+    stock.flipped = !stock.flipped;
+    saveStocks(stocks);
+  }
 }
 
 export function renameStock(id: string, name: string): void {

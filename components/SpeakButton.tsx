@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { playManagedAudio, stopCurrentAudio } from "@/lib/audioManager";
+import { API_BASE } from "@/lib/apiBase";
 
 type Props = {
   text: string;
@@ -32,7 +33,7 @@ export default function SpeakButton({ text, size = 32, audioPath }: Props) {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/tts", {
+      const res = await fetch(`${API_BASE}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),

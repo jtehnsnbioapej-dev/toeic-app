@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getStreak, getProgress, getWeakParts } from "@/lib/storage";
+import { getStreak, getProgress, getWeakParts, getEstimatedScore } from "@/lib/storage";
 import { HOME_GREETINGS } from "@/lib/petMessages";
 import { questions, DIFFICULTY_LABELS } from "@/data/questions";
 import { vocabulary } from "@/data/vocabulary";
 import { DEFAULT_PET_IMAGES } from "@/lib/petImages";
 import { getActivePetName } from "@/lib/characterStorage";
 import PetScene from "@/components/PetScene";
+import { getSfxEnabled, setSfxEnabled } from "@/lib/audioManager";
 
 type PetProfile = { name: string; type: string; emotions?: Record<string, string> };
 
@@ -42,6 +43,16 @@ export default function Home() {
   const [streak, setStreak] = useState(0);
   const [todayStats, setTodayStats] = useState({ correct: 0, total: 0 });
   const [weakParts, setWeakParts] = useState<{ part: string; rate: number }[]>([]);
+  const [estimatedScore, setEstimatedScore] = useState<number | null>(null);
+  const [sfxEnabled, setSfxEnabledState] = useState(true);
+
+  useEffect(() => { setSfxEnabledState(getSfxEnabled()); }, []);
+
+  const handleSfxToggle = () => {
+    const next = !sfxEnabled;
+    setSfxEnabled(next);
+    setSfxEnabledState(next);
+  };
 
   useEffect(() => {
     const savedPet = localStorage.getItem("petProfile");
@@ -55,6 +66,7 @@ export default function Home() {
     const todayEntry = all.find((p) => p.date === today);
     if (todayEntry) setTodayStats({ correct: todayEntry.correctCount, total: todayEntry.totalCount });
     setWeakParts(getWeakParts());
+    setEstimatedScore(getEstimatedScore());
     setLoaded(true);
   }, []);
 
@@ -194,6 +206,36 @@ export default function Home() {
           <span style={{ fontSize: 12, color: "var(--text-sub)", fontWeight: 700 }}>変更 ›</span>
         </button>
 
+        {/* 想定スコア */}
+        {estimatedScore !== null && (
+          <div style={{
+            background: "linear-gradient(135deg, #FEF3C7 0%, #FFF9EC 100%)",
+            border: "2px solid #FCD34D",
+            borderRadius: 20, padding: "16px 20px",
+            display: "flex", alignItems: "center", gap: 14,
+          }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 16,
+              background: "linear-gradient(135deg, #F59E0B, #FBBF24)",
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", flexShrink: 0,
+              boxShadow: "0 4px 12px rgba(245,158,11,0.35)",
+            }}>
+              <span style={{ fontSize: 9, color: "#FEF3C7", fontWeight: 700, lineHeight: 1.2 }}>推定</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>{estimatedScore}</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#92400E" }}>🏆 想定スコア</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: "#B45309", marginTop: 2 }}>
+                {estimatedScore}<span style={{ fontSize: 12, fontWeight: 600, color: "#D97706" }}>点</span>
+              </p>
+              <p style={{ fontSize: 10, color: "#D97706", marginTop: 1, fontWeight: 600 }}>
+                正解するたびに積み上がります
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* 今日の成績 */}
         {todayStats.total > 0 && (
           <div style={{
@@ -221,30 +263,38 @@ export default function Home() {
           </div>
         )}
 
-        {/* 苦手パート */}
-        {weakParts.length > 0 && (
-          <div style={{
-            background: "#FFFBEB", border: "1.5px solid #FDE68A",
-            borderRadius: 16, padding: "14px 18px",
-          }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#B45309" }}>
-              ⚡ {petName}がもっと練習しようって言ってるパート
+
+        {/* 効果音トグル */}
+        <div style={{
+          background: "#fff", borderRadius: 16, padding: "14px 18px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>🔔 効果音</p>
+            <p style={{ fontSize: 11, color: "var(--text-sub)", marginTop: 2 }}>
+              {sfxEnabled ? "ON" : "OFF"}
             </p>
-            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-              {weakParts.slice(0, 2).map((w) => (
-                <div key={w.part} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: "#92400E", fontWeight: 700 }}>Part {w.part.replace("part", "")}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 80, height: 7, background: "#FEF3C7", borderRadius: 99, overflow: "hidden" }}>
-                      <div style={{ width: `${w.rate}%`, height: "100%", background: "#F59E0B", borderRadius: 99 }} />
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#B45309" }}>{w.rate}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
-        )}
+          <button
+            onClick={handleSfxToggle}
+            style={{
+              width: 52, height: 30, borderRadius: 15, border: "none",
+              background: sfxEnabled ? "var(--primary)" : "#D1D5DB",
+              position: "relative", cursor: "pointer", flexShrink: 0,
+              transition: "background 0.2s",
+            }}
+          >
+            <span style={{
+              position: "absolute", top: 3,
+              left: sfxEnabled ? 24 : 4,
+              width: 24, height: 24, borderRadius: "50%",
+              background: "#fff",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+              transition: "left 0.2s",
+            }} />
+          </button>
+        </div>
 
         {/* 学習メニュー */}
         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-sub)", letterSpacing: "0.06em" }}>STUDY MENU</p>
@@ -267,6 +317,15 @@ export default function Home() {
           ))}
         </div>
 
+        {/* フッター */}
+        <div style={{ textAlign: "center", marginTop: 8 }}>
+          <Link
+            href="/privacy"
+            style={{ fontSize: 12, color: "var(--text-sub)", fontWeight: 600, textDecoration: "none" }}
+          >
+            プライバシーポリシー
+          </Link>
+        </div>
 
       </div>
     </div>
