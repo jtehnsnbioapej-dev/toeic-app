@@ -58,11 +58,11 @@ export default function QuizPage() {
     if (saved) setDifficulty(Number(saved));
   }, []);
 
-  // 難易度が決まったら問題をセット（Part5・6・7のみ）
+  // 難易度が決まったら問題をセット（Part5のみ。Part6・7は1文空所補充UIに収まらないため除外）
   useEffect(() => {
     if (difficulty === null) return;
     const filtered = questions.filter((q) =>
-      [5, 6, 7].includes(q.part) && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
+      q.part === 5 && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
     );
     const picked = shuffle(filtered).slice(0, QUIZ_COUNT).map(shuffleOptions);
     setQuizQuestions(picked);
@@ -144,7 +144,7 @@ export default function QuizPage() {
 
   const handleRetry = () => {
     const filtered = questions.filter((q) =>
-      q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
+      q.part === 5 && q.difficulty === difficulty && !isJapanese(q.question) && !q.options.some(isJapanese)
     );
     const picked = shuffle(filtered).slice(0, QUIZ_COUNT).map(shuffleOptions);
     setQuizQuestions(picked);

@@ -171,7 +171,7 @@ export default function PrivacyPolicyPage() {
           本ポリシーまたは本アプリのプライバシーに関するお問い合わせは、以下までご連絡ください。
         </p>
         <p style={{ ...p, fontWeight: 700 }}>
-          メール：（公開前に問い合わせ先メールアドレスを記入してください）
+          メール：hikari.app2026@gmail.com
         </p>
 
         <p style={{ ...p, color: "var(--text-sub)", marginTop: 24, fontSize: 13 }}>
