@@ -24,7 +24,7 @@ type CharacterStocks = {
 
 const DEFAULT_PET_STOCK: CharacterStock = {
   id: "default-pet",
-  name: "ひーちゃん",
+  name: "ひかり",
   type: "猫",
   role: "pet",
   images: {
@@ -56,7 +56,7 @@ const DEFAULT_USER_STOCK: CharacterStock = {
 
 const DEFAULT_PET2_STOCK: CharacterStock = {
   id: "default-pet2",
-  name: "あーちゃん",
+  name: "あかり",
   role: "pet",
   images: {
     idle: "/pet2-idle.png",
