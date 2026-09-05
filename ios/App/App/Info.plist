@@ -38,5 +38,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>撮影した写真をもとに、あなたの相棒となるAIキャラクターのイラストを生成するためにカメラを使用します。写真はキャラクター生成のためだけに使われ、他の目的には使用しません。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>選択した写真をもとに、あなたの相棒となるAIキャラクターのイラストを生成するために写真へのアクセスを使用します。写真はキャラクター生成のためだけに使われ、他の目的には使用しません。</string>
 </dict>
 </plist>
