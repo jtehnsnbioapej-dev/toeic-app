@@ -175,6 +175,8 @@ export default function QuizPage() {
         alignItems: "center", justifyContent: "center",
         background: "var(--bg)", padding: "32px 24px",
         paddingTop: "calc(env(safe-area-inset-top) + 32px)",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + var(--nav-h) + 32px)",
+        overflowY: "auto",
       }}>
         <p style={{ fontSize: 48, marginBottom: 16 }}>🔒</p>
         <p style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginBottom: 8, textAlign: "center" }}>クイズはプレミアム限定</p>
